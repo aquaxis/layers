@@ -1,0 +1,35 @@
+{
+  "name": "layers",
+  "version": "1.0.0",
+  "description": "階層的マルチエージェントシステム - tmux + Claude Code CLI",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "tsx src/index.ts start",
+    "stop": "tsx src/index.ts stop",
+    "status": "tsx src/index.ts status",
+    "send": "tsx src/index.ts send",
+    "monitor": "tsx src/index.ts monitor",
+    "live": "tsx src/index.ts live",
+    "build": "tsc",
+    "lint": "eslint src/",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage"
+  },
+  "keywords": [
+    "multi-agent",
+    "tmux",
+    "claude-code",
+    "typescript"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "eslint": "^8.55.0",
+    "prettier": "^3.1.0",
+    "tsx": "^4.6.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  }
+}
