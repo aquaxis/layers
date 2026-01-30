@@ -1,0 +1,116 @@
+{
+  "agents": [
+    {
+      "sessionName": "producer",
+      "role": "producer",
+      "superior": null,
+      "subordinates": ["director"],
+      "promptFile": ".layers/prompts/producer.md",
+      "permissionMode": "dangerouslySkip"
+    },
+    {
+      "sessionName": "director",
+      "role": "director",
+      "superior": "producer",
+      "subordinates": ["lead_design", "lead_prog", "lead_qa"],
+      "promptFile": ".layers/prompts/director.md",
+      "permissionMode": "dangerouslySkip"
+    },
+    {
+      "sessionName": "lead_design",
+      "role": "lead_design",
+      "superior": "director",
+      "subordinates": ["designer_1", "designer_2"],
+      "promptFile": ".layers/prompts/lead_design.md",
+      "permissionMode": "dangerouslySkip"
+    },
+    {
+      "sessionName": "lead_prog",
+      "role": "lead_prog",
+      "superior": "director",
+      "subordinates": ["programmer_1", "programmer_2", "programmer_3", "programmer_4", "programmer_5"],
+      "promptFile": ".layers/prompts/lead_prog.md",
+      "permissionMode": "dangerouslySkip"
+    },
+    {
+      "sessionName": "lead_qa",
+      "role": "lead_qa",
+      "superior": "director",
+      "subordinates": ["tester_1", "tester_2"],
+      "promptFile": ".layers/prompts/lead_qa.md",
+      "permissionMode": "dangerouslySkip"
+    },
+    {
+      "sessionName": "designer_1",
+      "role": "designer",
+      "superior": "lead_design",
+      "subordinates": [],
+      "promptFile": ".layers/prompts/designer.md",
+      "permissionMode": "dangerouslySkip"
+    },
+    {
+      "sessionName": "designer_2",
+      "role": "designer",
+      "superior": "lead_design",
+      "subordinates": [],
+      "promptFile": ".layers/prompts/designer.md",
+      "permissionMode": "dangerouslySkip"
+    },
+    {
+      "sessionName": "programmer_1",
+      "role": "programmer",
+      "superior": "lead_prog",
+      "subordinates": [],
+      "promptFile": ".layers/prompts/programmer.md",
+      "permissionMode": "dangerouslySkip"
+    },
+    {
+      "sessionName": "programmer_2",
+      "role": "programmer",
+      "superior": "lead_prog",
+      "subordinates": [],
+      "promptFile": ".layers/prompts/programmer.md",
+      "permissionMode": "dangerouslySkip"
+    },
+    {
+      "sessionName": "programmer_3",
+      "role": "programmer",
+      "superior": "lead_prog",
+      "subordinates": [],
+      "promptFile": ".layers/prompts/programmer.md",
+      "permissionMode": "dangerouslySkip"
+    },
+    {
+      "sessionName": "programmer_4",
+      "role": "programmer",
+      "superior": "lead_prog",
+      "subordinates": [],
+      "promptFile": ".layers/prompts/programmer.md",
+      "permissionMode": "dangerouslySkip"
+    },
+    {
+      "sessionName": "programmer_5",
+      "role": "programmer",
+      "superior": "lead_prog",
+      "subordinates": [],
+      "promptFile": ".layers/prompts/programmer.md",
+      "permissionMode": "dangerouslySkip"
+    },
+    {
+      "sessionName": "tester_1",
+      "role": "tester",
+      "superior": "lead_qa",
+      "subordinates": [],
+      "promptFile": ".layers/prompts/tester.md",
+      "permissionMode": "dangerouslySkip"
+    },
+    {
+      "sessionName": "tester_2",
+      "role": "tester",
+      "superior": "lead_qa",
+      "subordinates": [],
+      "promptFile": ".layers/prompts/tester.md",
+      "permissionMode": "dangerouslySkip"
+    }
+  ]
+}
