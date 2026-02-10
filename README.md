@@ -102,13 +102,13 @@ claude --version
 以下のコマンド1つで、リポジトリのクローンから前提条件のインストール、ビルドまですべて自動で行います。
 
 ```bash
-curl -fsSL https://github.com/aquaxis/layers/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/aquaxis/layers/main/install.sh | sh
 ```
 
-インストール先はデフォルトで `$HOME/layers` です。別のディレクトリにインストールする場合:
+インストール先はデフォルトでカレントディレクトリの `layers/` です。別のディレクトリにインストールする場合:
 
 ```bash
-LAYERS_INSTALL_DIR=/path/to/dir curl -fsSL https://github.com/aquaxis/layers/install.sh | sh
+LAYERS_INSTALL_DIR=/path/to/dir curl -fsSL https://raw.githubusercontent.com/aquaxis/layers/main/install.sh | sh
 ```
 
 ### スクリプトによるインストール（ローカル実行）

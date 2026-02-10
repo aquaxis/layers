@@ -6,14 +6,14 @@ set -e
 # マルチエージェントシステムの前提条件チェックとプロジェクトセットアップを自動化
 #
 # 使用方法:
-#   curl -fsSL https://github.com/aquaxis/layers/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/aquaxis/layers/main/install.sh | sh
 #   または
 #   chmod +x install.sh && ./install.sh
 # =============================================================================
 
 # 設定
 REPO_URL="https://github.com/aquaxis/layers.git"
-INSTALL_DIR="${LAYERS_INSTALL_DIR:-$HOME/layers}"
+INSTALL_DIR="${LAYERS_INSTALL_DIR:-$(pwd)/layers}"
 
 # 色定義
 RED='\033[0;31m'
