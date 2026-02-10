@@ -120,11 +120,14 @@ if [ "$EXEC_MODE" = "pipe" ]; then
     }
     success "クローン完了: $INSTALL_DIR"
   else
-    # 非空かつGitリポジトリでないディレクトリが存在
-    error "$INSTALL_DIR が空でなく、Layers リポジトリでもありません。"
-    echo "  別のインストール先を指定する場合:"
-    echo "    LAYERS_INSTALL_DIR=/path/to/dir curl -fsSL <URL> | sh"
-    exit 1
+    # 非空ディレクトリだがGitリポジトリでない場合
+    warn "$INSTALL_DIR は空ではありませんが、リポジトリをセットアップします。既存ファイルは上書きされる可能性があります。"
+    cd "$INSTALL_DIR"
+    git init || { error "git init に失敗しました。"; exit 1; }
+    git remote add origin "$REPO_URL" || { error "git remote add に失敗しました。"; exit 1; }
+    git fetch origin || { error "git fetch に失敗しました。"; exit 1; }
+    git checkout -f -B main origin/main || { error "git checkout に失敗しました。"; exit 1; }
+    success "リポジトリセットアップ完了: $INSTALL_DIR"
   fi
 
   PROJECT_DIR="$INSTALL_DIR"
