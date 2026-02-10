@@ -26,31 +26,145 @@ Lead Designer    Lead Programmer     QA Lead
 
 ## 必要環境
 
+- Git
 - Node.js 20.x LTS 以上
 - pnpm（推奨パッケージマネージャ）
 - tmux 3.x 以上
 - Claude Code CLI（`claude`コマンド）
 - Claude Max/Pro サブスクリプション または Anthropic API Key
 
-### pnpmのインストール
+> **Note**: Windowsをご利用の場合は、WSL2（Windows Subsystem for Linux 2）環境が必要です。tmuxはネイティブWindowsでは動作しません。以下のコマンドはすべてWSL2のターミナル（Ubuntu等）で実行してください。
+
+### Node.js のインストール
+
+nvm（Node Version Manager）の利用を推奨します。
 
 ```bash
-# npmでインストール
+# nvm のインストール
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+
+# シェルの再読み込み
+source ~/.bashrc  # または source ~/.zshrc
+
+# Node.js 20.x LTS のインストール
+nvm install 20
+nvm use 20
+
+# バージョン確認
+node -v  # v20.x.x が表示されること
+```
+
+### pnpm のインストール
+
+```bash
+# npm でインストール
 npm install -g pnpm
 
-# または corepack で有効化
+# または corepack で有効化（Node.js 16.13以降）
 corepack enable pnpm
+
+# バージョン確認
+pnpm -v
 ```
+
+### tmux のインストール
+
+```bash
+# Linux（Debian/Ubuntu）
+sudo apt update && sudo apt install -y tmux
+
+# macOS（Homebrew）
+brew install tmux
+
+# バージョン確認（3.x 以上であること）
+tmux -V
+```
+
+### Claude Code CLI のインストール
+
+```bash
+# グローバルインストール
+npm install -g @anthropic-ai/claude-code
+
+# 認証（初回のみ・必須）
+claude login
+
+# バージョン確認
+claude --version
+```
+
+> **重要**: `claude login` による認証を完了しないと、エージェントが正常に動作しません。Claude Max/Pro サブスクリプション または Anthropic API Key が必要です。
 
 ## インストール
 
+### ワンライナーインストール（推奨）
+
+以下のコマンド1つで、リポジトリのクローンから前提条件のインストール、ビルドまですべて自動で行います。
+
 ```bash
-# リポジトリのクローン
+curl -fsSL https://github.com/aquaxis/layers/install.sh | sh
+```
+
+インストール先はデフォルトで `$HOME/layers` です。別のディレクトリにインストールする場合:
+
+```bash
+LAYERS_INSTALL_DIR=/path/to/dir curl -fsSL https://github.com/aquaxis/layers/install.sh | sh
+```
+
+### スクリプトによるインストール（ローカル実行）
+
+すでにリポジトリをクローン済みの場合は、プロジェクトディレクトリ内でスクリプトを実行できます。
+
+```bash
+git clone https://github.com/aquaxis/layers.git
+cd layers
+chmod +x install.sh
+./install.sh
+```
+
+### スクリプトが自動的に行うこと
+
+- OS検出（Linux / macOS）
+- Node.js、pnpm、tmuxの有無チェックと未インストール時の自動インストール
+- リポジトリのクローン（ワンライナー実行時のみ）
+- `pnpm install` による依存パッケージのインストール
+- `pnpm run build` によるビルド
+- 動作確認チェック
+- Claude Code CLIが未インストールの場合のインストール案内
+
+### 手動インストール
+
+```bash
+# 1. リポジトリのクローン
 git clone <repository-url>
 cd layers
 
-# 依存パッケージのインストール
+# 2. 依存パッケージのインストール
 pnpm install
+
+# 3. ビルド
+pnpm run build
+
+# 4. 動作確認
+pnpm run status
+```
+
+### 動作確認チェックリスト
+
+インストール完了後、以下を確認してください。
+
+```bash
+# 各ツールが利用可能であること
+node -v          # v20.x.x
+pnpm -v          # バージョンが表示される
+tmux -V          # tmux 3.x
+claude --version # バージョンが表示される
+
+# ビルドが成功すること
+pnpm run build   # エラーなく完了
+
+# ステータスコマンドが実行可能であること
+pnpm run status
 ```
 
 ## ビルド
@@ -95,6 +209,7 @@ pnpm run send -- --to producer --type instruction --message "プロジェクト�
 ```
 
 オプション:
+
 - `--to` : 送信先エージェント（必須）
 - `--type` : メッセージタイプ（instruction, report, question, answer, status, error, complete）（必須）
 - `--message` : メッセージ本文（必須）
@@ -107,7 +222,35 @@ pnpm run send -- --to producer --type instruction --message "プロジェクト�
 pnpm run monitor
 ```
 
-リアルタイムでエージェントの状態を監視します。Ctrl+Cで終了。
+バックグラウンドでエージェントの正常性を監視し、異常検出時にログを出力します。Ctrl+Cで終了。
+
+### リアルタイム実行状況表示
+
+```bash
+pnpm run live
+```
+
+全14エージェントの実行状況をターミナル上にダッシュボード形式で表示します。一定間隔（デフォルト3秒）で自動更新されます。
+
+各エージェントについて以下の情報が表示されます:
+
+- **セッション名**: tmuxセッション名
+- **役割**: エージェントの役職
+- **状態**: 稼働中 / 停止
+- **最新アクティビティ**: 各エージェントが現在行っている作業内容
+
+オプション:
+
+- `--interval <ms>` : 更新間隔をミリ秒で指定（デフォルト: 3000）
+
+```bash
+# 5秒間隔で更新
+pnpm run live -- --interval 5000
+```
+
+Ctrl+Cで終了。
+
+> **`monitor` との違い**: `monitor`はバックグラウンドでの正常性監視（異常検出時にログ出力）を行うのに対し、`live`は人間が視覚的に全エージェントの状況をリアルタイムで把握するためのダッシュボードです。
 
 ### エージェントへの接続
 
