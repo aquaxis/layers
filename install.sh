@@ -13,7 +13,7 @@ set -e
 
 # 設定
 REPO_URL="https://github.com/aquaxis/layers.git"
-INSTALL_DIR="${LAYERS_INSTALL_DIR:-$(pwd)/layers}"
+INSTALL_DIR="${LAYERS_INSTALL_DIR:-$(pwd)}"
 
 # 色定義
 RED='\033[0;31m'
@@ -102,24 +102,15 @@ if [ "$EXEC_MODE" = "pipe" ]; then
   echo ""
   info "リポジトリのセットアップ..."
 
-  if [ -d "$INSTALL_DIR" ]; then
-    # ディレクトリが既に存在する場合
-    if [ -d "$INSTALL_DIR/.git" ]; then
-      # Gitリポジトリの場合は更新
-      info "既存のリポジトリを更新しています: $INSTALL_DIR"
-      cd "$INSTALL_DIR"
-      git pull || {
-        warn "git pull に失敗しました。既存のリポジトリをそのまま使用します。"
-      }
-    else
-      # Gitリポジトリでないディレクトリが存在
-      error "$INSTALL_DIR が既に存在しますが、Layers リポジトリではありません。"
-      echo "  別のインストール先を指定する場合:"
-      echo "    LAYERS_INSTALL_DIR=/path/to/dir curl -fsSL <URL> | sh"
-      exit 1
-    fi
-  else
-    # 新規クローン
+  if [ -d "$INSTALL_DIR/.git" ]; then
+    # 既にGitリポジトリの場合は更新
+    info "既存のリポジトリを更新しています: $INSTALL_DIR"
+    cd "$INSTALL_DIR"
+    git pull || {
+      warn "git pull に失敗しました。既存のリポジトリをそのまま使用します。"
+    }
+  elif [ -z "$(ls -A "$INSTALL_DIR" 2>/dev/null)" ]; then
+    # 空ディレクトリまたは存在しないディレクトリの場合はクローン
     info "リポジトリをクローンしています: $INSTALL_DIR"
     git clone "$REPO_URL" "$INSTALL_DIR" || {
       error "リポジトリのクローンに失敗しました。"
@@ -128,6 +119,12 @@ if [ "$EXEC_MODE" = "pipe" ]; then
       exit 1
     }
     success "クローン完了: $INSTALL_DIR"
+  else
+    # 非空かつGitリポジトリでないディレクトリが存在
+    error "$INSTALL_DIR が空でなく、Layers リポジトリでもありません。"
+    echo "  別のインストール先を指定する場合:"
+    echo "    LAYERS_INSTALL_DIR=/path/to/dir curl -fsSL <URL> | sh"
+    exit 1
   fi
 
   PROJECT_DIR="$INSTALL_DIR"
