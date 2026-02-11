@@ -117,6 +117,33 @@ is_layers_repo() {
   esac
 }
 
+# サブディレクトリにLayersをクローンまたは更新する関数
+clone_to_subdir() {
+  INSTALL_DIR="$INSTALL_DIR/layers"
+  info "Layersを $INSTALL_DIR にクローンします..."
+  if [ -d "$INSTALL_DIR/.git" ] && is_layers_repo "$INSTALL_DIR"; then
+    # サブディレクトリに既にLayersリポジトリがある場合は更新
+    info "既存のLayersリポジトリを更新しています: $INSTALL_DIR"
+    cd "$INSTALL_DIR" || { error "ディレクトリに移動できません: $INSTALL_DIR"; exit 1; }
+    git pull || {
+      warn "git pull に失敗しました。既存のリポジトリをそのまま使用します。"
+    }
+  elif [ -d "$INSTALL_DIR" ] && [ -n "$(ls -A "$INSTALL_DIR" 2>/dev/null)" ]; then
+    # サブディレクトリが存在し空でない場合はエラー
+    error "$INSTALL_DIR は既に存在し、空ではありません。"
+    error "ディレクトリを削除するか、LAYERS_INSTALL_DIR 環境変数で別のインストール先を指定してください。"
+    exit 1
+  else
+    git clone "$REPO_URL" "$INSTALL_DIR" || {
+      error "リポジトリのクローンに失敗しました。"
+      error "URL: $REPO_URL"
+      error "ネットワーク接続とURLを確認してください。"
+      exit 1
+    }
+    success "クローン完了: $INSTALL_DIR"
+  fi
+}
+
 if [ "$EXEC_MODE" = "pipe" ]; then
   echo ""
   info "リポジトリのセットアップ..."
@@ -132,29 +159,7 @@ if [ "$EXEC_MODE" = "pipe" ]; then
     else
       # Layers以外のGitリポジトリの場合はサブディレクトリにクローン
       warn "カレントディレクトリは別のGitリポジトリです。既存リポジトリを保護します。"
-      INSTALL_DIR="$INSTALL_DIR/layers"
-      info "Layersを $INSTALL_DIR にクローンします..."
-      if [ -d "$INSTALL_DIR/.git" ] && is_layers_repo "$INSTALL_DIR"; then
-        # サブディレクトリに既にLayersリポジトリがある場合は更新
-        info "既存のLayersリポジトリを更新しています: $INSTALL_DIR"
-        cd "$INSTALL_DIR" || { error "ディレクトリに移動できません: $INSTALL_DIR"; exit 1; }
-        git pull || {
-          warn "git pull に失敗しました。既存のリポジトリをそのまま使用します。"
-        }
-      elif [ -d "$INSTALL_DIR" ] && [ -n "$(ls -A "$INSTALL_DIR" 2>/dev/null)" ]; then
-        # サブディレクトリが存在し空でない場合はエラー
-        error "$INSTALL_DIR は既に存在し、空ではありません。"
-        error "ディレクトリを削除するか、LAYERS_INSTALL_DIR 環境変数で別のインストール先を指定してください。"
-        exit 1
-      else
-        git clone "$REPO_URL" "$INSTALL_DIR" || {
-          error "リポジトリのクローンに失敗しました。"
-          error "URL: $REPO_URL"
-          error "ネットワーク接続とURLを確認してください。"
-          exit 1
-        }
-        success "クローン完了: $INSTALL_DIR"
-      fi
+      clone_to_subdir
     fi
   elif [ -z "$(ls -A "$INSTALL_DIR" 2>/dev/null)" ]; then
     # 空ディレクトリまたは存在しないディレクトリの場合はクローン
@@ -167,14 +172,9 @@ if [ "$EXEC_MODE" = "pipe" ]; then
     }
     success "クローン完了: $INSTALL_DIR"
   else
-    # 非空ディレクトリだがGitリポジトリでない場合
-    warn "$INSTALL_DIR は空ではありませんが、リポジトリをセットアップします。既存ファイルは上書きされる可能性があります。"
-    cd "$INSTALL_DIR" || { error "ディレクトリに移動できません: $INSTALL_DIR"; exit 1; }
-    git init || { error "git init に失敗しました。"; exit 1; }
-    git remote add origin "$REPO_URL" || { error "git remote add に失敗しました。"; exit 1; }
-    git fetch origin || { error "git fetch に失敗しました。"; exit 1; }
-    git checkout -f -B main origin/main || { error "git checkout に失敗しました。"; exit 1; }
-    success "リポジトリセットアップ完了: $INSTALL_DIR"
+    # 非空ディレクトリだがGitリポジトリでない場合はサブディレクトリにクローン
+    warn "カレントディレクトリは空ではありません。既存ファイルを保護します。"
+    clone_to_subdir
   fi
 
   PROJECT_DIR="$INSTALL_DIR"
