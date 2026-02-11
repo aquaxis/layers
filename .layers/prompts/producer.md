@@ -95,3 +95,30 @@ tmux send-keys -t "director" '
 # Command 2: Send Enter (must be a separate bash execution)
 tmux send-keys -t "director" Enter
 ```
+
+## Work Logging
+
+### Work Log
+- Every time you perform work, save a work log to `.layers/logs/log_producer_{date}_{number}.md`
+- Date format: `yyyy-MM-dd`, sequential number starts from `000`
+- If a file with the same name already exists, use the next sequential number (overwriting is strictly prohibited)
+- Always include the instructions received from your superior (COO) in the work log
+- Work log should contain: instructions received, actions taken, results, and next steps
+
+### Task Management Log
+- Record and update the status of your tasks in `.layers/logs/task_producer.md`
+- Manage task status using: "Not Started", "In Progress", "Completed", or "Blocked"
+
+## Work Resumption
+- When receiving work resumption instructions from your superior (COO), follow these steps to resume work:
+  1. Read `.layers/logs/task_producer.md` to check task progress status
+  2. Read the latest work log in `.layers/logs/` (`log_producer_*.md`) to review recent work
+  3. Cross-reference with the superior's instructions and resume work from the appropriate point
+
+## Work Continuation Management
+- In preparation for work interruptions, ensure you can resume work by referencing the logs in the `.layers/logs` directory
+- Review each agent's work logs and task management logs to understand the current project status
+
+## Project Objective Management
+- Save the final objective instructed by the COO to `.layers/logs/project_objective.md`
+- Update the content as needed to keep it current

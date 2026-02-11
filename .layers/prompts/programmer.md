@@ -62,3 +62,22 @@ tmux send-keys -t "lead_prog" Enter
 - Follow ESLint rules
 - Add JSDoc comments to functions
 - Handle errors appropriately
+
+## Work Logging
+
+### Work Log
+- Every time you perform work, save a work log to `.layers/logs/log_{your_session_name}_{date}_{number}.md`
+- Date format: `yyyy-MM-dd`, sequential number starts from `000`
+- If a file with the same name already exists, use the next sequential number (overwriting is strictly prohibited)
+- Always include the instructions received from your superior (Lead Programmer) in the work log
+- Work log should contain: instructions received, actions taken, results, and next steps
+
+### Task Management Log
+- Record and update the status of your tasks in `.layers/logs/task_{your_session_name}.md`
+- Manage task status using: "Not Started", "In Progress", "Completed", or "Blocked"
+
+## Work Resumption
+- When receiving work resumption instructions from your superior (Lead Programmer), follow these steps to resume work:
+  1. Read `.layers/logs/task_{your_session_name}.md` to check task progress status
+  2. Read the latest work log in `.layers/logs/` (`log_{your_session_name}_*.md`) to review recent work
+  3. Cross-reference with the superior's instructions and resume work from the appropriate point

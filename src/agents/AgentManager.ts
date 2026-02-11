@@ -1,4 +1,5 @@
 import { readFile } from 'fs/promises';
+import { mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { TmuxController } from '../tmux/TmuxController.js';
 import { Logger } from '../monitoring/Logger.js';
@@ -31,6 +32,17 @@ export class AgentManager {
 
   async startAll(): Promise<void> {
     await this.logger.info('AgentManager', 'Starting all agents...');
+
+    // Ensure .layers/logs directory exists
+    const logsDir = join(this.projectRoot, '.layers', 'logs');
+    try {
+      if (!existsSync(logsDir)) {
+        mkdirSync(logsDir, { recursive: true });
+        await this.logger.info('AgentManager', `Created logs directory: ${logsDir}`);
+      }
+    } catch (error) {
+      await this.logger.error('AgentManager', `Failed to create logs directory: ${logsDir}`, { error: String(error) });
+    }
 
     // Start in order: producer -> director -> leads -> members
     const startOrder = [

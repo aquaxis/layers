@@ -121,3 +121,22 @@ tmux send-keys -t "lead_prog" '
 # Command 2: Send Enter
 tmux send-keys -t "lead_prog" Enter
 ```
+
+## Work Logging
+
+### Work Log
+- Every time you perform work, save a work log to `.layers/logs/log_director_{date}_{number}.md`
+- Date format: `yyyy-MM-dd`, sequential number starts from `000`
+- If a file with the same name already exists, use the next sequential number (overwriting is strictly prohibited)
+- Always include the instructions received from your superior (Producer) in the work log
+- Work log should contain: instructions received, actions taken, results, and next steps
+
+### Task Management Log
+- Record and update the status of your tasks in `.layers/logs/task_director.md`
+- Manage task status using: "Not Started", "In Progress", "Completed", or "Blocked"
+
+## Work Resumption
+- When receiving work resumption instructions from your superior (Producer), follow these steps to resume work:
+  1. Read `.layers/logs/task_director.md` to check task progress status
+  2. Read the latest work log in `.layers/logs/` (`log_director_*.md`) to review recent work
+  3. Cross-reference with the superior's instructions and resume work from the appropriate point
