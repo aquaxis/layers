@@ -98,17 +98,64 @@ fi
 # -------------------------------------------------------------------------
 # 4. リポジトリクローン（パイプ実行時のみ）
 # -------------------------------------------------------------------------
+
+# Layersリポジトリかどうかを検証する関数
+is_layers_repo() {
+  local dir="$1"
+  if [ ! -d "$dir/.git" ]; then
+    return 1
+  fi
+  local remote_url
+  remote_url=$(cd "$dir" && git remote get-url origin 2>/dev/null || echo "")
+  case "$remote_url" in
+    *aquaxis/layers* | *layers.git)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
 if [ "$EXEC_MODE" = "pipe" ]; then
   echo ""
   info "リポジトリのセットアップ..."
 
   if [ -d "$INSTALL_DIR/.git" ]; then
-    # 既にGitリポジトリの場合は更新
-    info "既存のリポジトリを更新しています: $INSTALL_DIR"
-    cd "$INSTALL_DIR"
-    git pull || {
-      warn "git pull に失敗しました。既存のリポジトリをそのまま使用します。"
-    }
+    if is_layers_repo "$INSTALL_DIR"; then
+      # LayersのGitリポジトリの場合は更新
+      info "既存のLayersリポジトリを更新しています: $INSTALL_DIR"
+      cd "$INSTALL_DIR" || { error "ディレクトリに移動できません: $INSTALL_DIR"; exit 1; }
+      git pull || {
+        warn "git pull に失敗しました。既存のリポジトリをそのまま使用します。"
+      }
+    else
+      # Layers以外のGitリポジトリの場合はサブディレクトリにクローン
+      warn "カレントディレクトリは別のGitリポジトリです。既存リポジトリを保護します。"
+      INSTALL_DIR="$INSTALL_DIR/layers"
+      info "Layersを $INSTALL_DIR にクローンします..."
+      if [ -d "$INSTALL_DIR/.git" ] && is_layers_repo "$INSTALL_DIR"; then
+        # サブディレクトリに既にLayersリポジトリがある場合は更新
+        info "既存のLayersリポジトリを更新しています: $INSTALL_DIR"
+        cd "$INSTALL_DIR" || { error "ディレクトリに移動できません: $INSTALL_DIR"; exit 1; }
+        git pull || {
+          warn "git pull に失敗しました。既存のリポジトリをそのまま使用します。"
+        }
+      elif [ -d "$INSTALL_DIR" ] && [ -n "$(ls -A "$INSTALL_DIR" 2>/dev/null)" ]; then
+        # サブディレクトリが存在し空でない場合はエラー
+        error "$INSTALL_DIR は既に存在し、空ではありません。"
+        error "ディレクトリを削除するか、LAYERS_INSTALL_DIR 環境変数で別のインストール先を指定してください。"
+        exit 1
+      else
+        git clone "$REPO_URL" "$INSTALL_DIR" || {
+          error "リポジトリのクローンに失敗しました。"
+          error "URL: $REPO_URL"
+          error "ネットワーク接続とURLを確認してください。"
+          exit 1
+        }
+        success "クローン完了: $INSTALL_DIR"
+      fi
+    fi
   elif [ -z "$(ls -A "$INSTALL_DIR" 2>/dev/null)" ]; then
     # 空ディレクトリまたは存在しないディレクトリの場合はクローン
     info "リポジトリをクローンしています: $INSTALL_DIR"
@@ -122,7 +169,7 @@ if [ "$EXEC_MODE" = "pipe" ]; then
   else
     # 非空ディレクトリだがGitリポジトリでない場合
     warn "$INSTALL_DIR は空ではありませんが、リポジトリをセットアップします。既存ファイルは上書きされる可能性があります。"
-    cd "$INSTALL_DIR"
+    cd "$INSTALL_DIR" || { error "ディレクトリに移動できません: $INSTALL_DIR"; exit 1; }
     git init || { error "git init に失敗しました。"; exit 1; }
     git remote add origin "$REPO_URL" || { error "git remote add に失敗しました。"; exit 1; }
     git fetch origin || { error "git fetch に失敗しました。"; exit 1; }
@@ -255,7 +302,7 @@ install_tmux
 echo ""
 info "プロジェクトセットアップを開始します..."
 
-cd "$PROJECT_DIR"
+cd "$PROJECT_DIR" || { error "プロジェクトディレクトリに移動できません: $PROJECT_DIR"; exit 1; }
 
 info "依存パッケージをインストールしています..."
 pnpm install
