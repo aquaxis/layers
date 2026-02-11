@@ -306,6 +306,14 @@ cd "$PROJECT_DIR" || { error "プロジェクトディレクトリに移動で�
 
 info "依存パッケージをインストールしています..."
 pnpm install
+if [ ! -d "node_modules" ]; then
+  warn "node_modules が作成されませんでした。再インストールを試みます..."
+  pnpm install --force
+fi
+if [ ! -d "node_modules" ]; then
+  error "node_modules のインストールに失敗しました。"
+  exit 1
+fi
 success "pnpm install 完了"
 
 info "ビルドしています..."
