@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# layers - Layers マルチエージェントシステム制御コマンド
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$SCRIPT_DIR"
+
+case "${1:-}" in
+  start)
+    cd "$PROJECT_DIR" && pnpm run start
+    ;;
+  stop)
+    cd "$PROJECT_DIR" && pnpm run stop
+    ;;
+  send)
+    shift
+    cd "$PROJECT_DIR" && pnpm run send -- "$@"
+    ;;
+  status)
+    cd "$PROJECT_DIR" && pnpm run status
+    ;;
+  apoint)
+    tmux attach -t producer
+    ;;
+  "")
+    cd "$PROJECT_DIR" && pnpm run monitor
+    ;;
+  *)
+    echo "Usage: layers [start|stop|send|status|apoint]"
+    echo ""
+    echo "Commands:"
+    echo "  (none)   Start monitor mode"
+    echo "  start    Start all agents"
+    echo "  stop     Stop all agents"
+    echo "  send     Send a message to an agent"
+    echo "  status   Show the status of agents"
+    echo "  apoint   Attach to producer session"
+    exit 1
+    ;;
+esac

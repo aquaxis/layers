@@ -321,7 +321,62 @@ pnpm run build
 success "pnpm run build 完了"
 
 # -------------------------------------------------------------------------
-# 9. 動作確認チェック
+# 9. layers コマンドの作成
+# -------------------------------------------------------------------------
+create_layers_command() {
+  local layers_cmd="$PROJECT_DIR/layers"
+  info "layers コマンドスクリプトを作成しています..."
+
+  cat > "$layers_cmd" << 'LAYERS_CMD_EOF'
+#!/usr/bin/env bash
+# layers - Layers マルチエージェントシステム制御コマンド
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$SCRIPT_DIR"
+
+case "${1:-}" in
+  start)
+    cd "$PROJECT_DIR" && pnpm run start
+    ;;
+  stop)
+    cd "$PROJECT_DIR" && pnpm run stop
+    ;;
+  send)
+    shift
+    cd "$PROJECT_DIR" && pnpm run send -- "$@"
+    ;;
+  status)
+    cd "$PROJECT_DIR" && pnpm run status
+    ;;
+  apoint)
+    tmux attach -t producer
+    ;;
+  "")
+    cd "$PROJECT_DIR" && pnpm run monitor
+    ;;
+  *)
+    echo "Usage: layers [start|stop|send|status|apoint]"
+    echo ""
+    echo "Commands:"
+    echo "  (none)   Start monitor mode"
+    echo "  start    Start all agents"
+    echo "  stop     Stop all agents"
+    echo "  send     Send a message to an agent"
+    echo "  status   Show the status of agents"
+    echo "  apoint   Attach to producer session"
+    exit 1
+    ;;
+esac
+LAYERS_CMD_EOF
+
+  chmod +x "$layers_cmd"
+  success "layers コマンドを作成しました: $layers_cmd"
+}
+
+create_layers_command
+
+# -------------------------------------------------------------------------
+# 10. 動作確認チェック
 # -------------------------------------------------------------------------
 echo ""
 echo "============================================="
@@ -352,15 +407,15 @@ else
   CHECK_PASSED=false
 fi
 
-if [ -d "$PROJECT_DIR/dist" ]; then
-  success "ビルド成果物 (dist/) が存在します"
+if [ -d "$PROJECT_DIR/.layers/dist" ]; then
+  success "ビルド成果物 (.layers/dist/) が存在します"
 else
-  error "ビルド成果物 (dist/) が見つかりません"
+  error "ビルド成果物 (.layers/dist/) が見つかりません"
   CHECK_PASSED=false
 fi
 
 # -------------------------------------------------------------------------
-# 10. Claude Code CLI の案内
+# 11. Claude Code CLI の案内
 # -------------------------------------------------------------------------
 echo ""
 if command -v claude &> /dev/null; then
@@ -380,7 +435,7 @@ else
 fi
 
 # -------------------------------------------------------------------------
-# 11. 完了メッセージ
+# 12. 完了メッセージ
 # -------------------------------------------------------------------------
 echo ""
 echo "============================================="
@@ -397,7 +452,11 @@ if [ "$EXEC_MODE" = "pipe" ]; then
   echo ""
 fi
 echo "  次のステップ:"
-echo "    pnpm run start    # 全エージェントを起動"
+echo "    ./layers          # モニターモードを開始"
+echo "    ./layers start    # 全エージェントを起動"
+echo "    ./layers stop     # 全エージェントを停止"
+echo ""
+echo "  より詳細なコマンド:"
 echo "    pnpm run status   # ステータス確認"
 echo "    pnpm run live     # リアルタイム実行状況表示"
 echo ""

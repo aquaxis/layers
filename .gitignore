@@ -2,7 +2,7 @@
 node_modules/
 
 # Build output
-dist/
+.layers/dist/
 
 # Package manager
 package-lock.json

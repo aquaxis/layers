@@ -288,40 +288,41 @@ tmux ls
 
 ```
 layers/
-├── src/
-│   ├── index.ts              # CLIエントリーポイント
-│   ├── agents/               # エージェント管理
-│   │   ├── AgentManager.ts
-│   │   ├── types.ts
-│   │   └── index.ts
-│   ├── communication/        # メッセージング
-│   │   ├── MessageBroker.ts
-│   │   ├── TmuxTransport.ts
-│   │   ├── types.ts
-│   │   └── index.ts
-│   ├── tmux/                 # tmux操作
-│   │   ├── TmuxController.ts
-│   │   ├── ShellExecutor.ts
-│   │   ├── types.ts
-│   │   └── index.ts
-│   ├── monitoring/           # 監視・ログ
-│   │   ├── Monitor.ts
-│   │   ├── Logger.ts
-│   │   └── index.ts
-│   └── config/
-│       └── agents.json       # エージェント設定
-├── .layers/
-│   └── prompts/              # エージェントプロンプト
-│       ├── producer.md
-│       ├── director.md
-│       ├── lead_design.md
-│       ├── lead_prog.md
-│       ├── lead_qa.md
-│       ├── designer.md
-│       ├── programmer.md
-│       └── tester.md
-├── dist/                     # ビルド成果物
-├── logs/                     # ログファイル
+├── .layers/                   # Layers固有コンテンツ統合ディレクトリ
+│   ├── src/                   # TypeScriptソースコード
+│   │   ├── index.ts           # CLIエントリーポイント
+│   │   ├── agents/            # エージェント管理
+│   │   │   ├── AgentManager.ts
+│   │   │   ├── types.ts
+│   │   │   └── index.ts
+│   │   ├── communication/     # メッセージング
+│   │   │   ├── MessageBroker.ts
+│   │   │   ├── TmuxTransport.ts
+│   │   │   ├── types.ts
+│   │   │   └── index.ts
+│   │   ├── tmux/              # tmux操作
+│   │   │   ├── TmuxController.ts
+│   │   │   ├── ShellExecutor.ts
+│   │   │   ├── types.ts
+│   │   │   └── index.ts
+│   │   ├── monitoring/        # 監視・ログ
+│   │   │   ├── Monitor.ts
+│   │   │   ├── Logger.ts
+│   │   │   └── index.ts
+│   │   └── config/
+│   │       └── agents.json    # エージェント設定
+│   ├── dist/                  # ビルド成果物（自動生成）
+│   ├── prompts/               # エージェントプロンプト
+│   │   ├── producer.md
+│   │   ├── director.md
+│   │   ├── lead_design.md
+│   │   ├── lead_prog.md
+│   │   ├── lead_qa.md
+│   │   ├── designer.md
+│   │   ├── programmer.md
+│   │   └── tester.md
+│   └── logs/                  # エージェント作業ログ（自動生成）
+├── logs/                      # システムログファイル
 ├── package.json
 ├── tsconfig.json
 ├── pnpm-lock.yaml
@@ -332,7 +333,7 @@ layers/
 
 ### agents.json
 
-各エージェントの設定は `src/config/agents.json` で管理されます。
+各エージェントの設定は `.layers/src/config/agents.json` で管理されます。
 
 ```json
 {
