@@ -23,7 +23,7 @@ export class AgentManager {
   }
 
   async loadConfig(configPath?: string): Promise<void> {
-    const path = configPath || join(this.projectRoot, 'src/config/agents.json');
+    const path = configPath || join(this.projectRoot, '.layers/src/config/agents.json');
     const content = await readFile(path, 'utf-8');
     const config: AgentsConfig = JSON.parse(content);
     this.agents = config.agents;
