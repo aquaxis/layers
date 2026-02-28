@@ -321,6 +321,16 @@ pnpm run build
 success "pnpm run build 完了"
 
 # -------------------------------------------------------------------------
+# 8.5. README.md を .layers ディレクトリに移動
+# -------------------------------------------------------------------------
+if [ -f "$PROJECT_DIR/README.md" ]; then
+  info "README.md を .layers/ ディレクトリに移動しています..."
+  mkdir -p "$PROJECT_DIR/.layers"
+  mv "$PROJECT_DIR/README.md" "$PROJECT_DIR/.layers/README.md"
+  success "README.md を .layers/ に移動しました"
+fi
+
+# -------------------------------------------------------------------------
 # 9. layers コマンドの作成
 # -------------------------------------------------------------------------
 create_layers_command() {
