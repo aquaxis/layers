@@ -55,7 +55,12 @@ else
 fi
 
 if [ "$EXEC_MODE" = "local" ]; then
-  info "実行モード: ローカル（プロジェクトディレクトリ: $PROJECT_DIR）"
+  error "install.sh はプロジェクトディレクトリ内では実行できません。"
+  echo ""
+  echo "  リモートからパイプ実行してください:"
+  echo "    curl -fsSL https://raw.githubusercontent.com/aquaxis/layers/main/install.sh | sh"
+  echo ""
+  exit 1
 else
   info "実行モード: リモート（リポジトリをクローンします）"
 fi
@@ -319,16 +324,6 @@ success "pnpm install 完了"
 info "ビルドしています..."
 pnpm run build
 success "pnpm run build 完了"
-
-# -------------------------------------------------------------------------
-# 8.5. README.md を .layers ディレクトリに移動
-# -------------------------------------------------------------------------
-if [ -f "$PROJECT_DIR/README.md" ]; then
-  info "README.md を .layers/ ディレクトリに移動しています..."
-  mkdir -p "$PROJECT_DIR/.layers"
-  mv "$PROJECT_DIR/README.md" "$PROJECT_DIR/.layers/README.md"
-  success "README.md を .layers/ に移動しました"
-fi
 
 # -------------------------------------------------------------------------
 # 9. layers コマンドの作成
