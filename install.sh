@@ -7,8 +7,9 @@ set -e
 #
 # 使用方法:
 #   curl -fsSL https://raw.githubusercontent.com/aquaxis/layers/main/install.sh | sh
-#   または
-#   chmod +x install.sh && ./install.sh
+#
+# 注意: プロジェクトディレクトリ内でのローカル実行は禁止されています。
+#       必ず上記のcurlパイプ実行を使用してください。
 # =============================================================================
 
 # 設定
