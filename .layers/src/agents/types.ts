@@ -10,6 +10,8 @@ export type AgentRole =
 
 export type PermissionMode = 'default' | 'acceptEdits' | 'dangerouslySkip';
 
+export type BackendType = 'claude' | 'agent-cli';
+
 export interface AgentConfig {
   sessionName: string;
   role: AgentRole;
@@ -17,6 +19,11 @@ export interface AgentConfig {
   subordinates: string[];
   promptFile: string;
   permissionMode?: PermissionMode;
+  backend?: BackendType; // default: 'claude'
+  personaFile?: string; // path to agent-cli persona file (for agent-cli backend)
+  provider?: string; // AI provider for agent-cli (e.g., 'claude', 'ollama')
+  model?: string; // model override for agent-cli
+  autoApproveTools?: boolean; // auto-approve tools for agent-cli (default: true for consistency)
 }
 
 export interface AgentStatus {
@@ -25,6 +32,7 @@ export interface AgentStatus {
   isRunning: boolean;
   superior: string | null;
   subordinates: string[];
+  backend?: BackendType;
 }
 
 export interface HealthCheckResult {

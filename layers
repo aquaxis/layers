@@ -4,19 +4,47 @@
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$SCRIPT_DIR"
 
+BACKEND="${LAYERS_BACKEND:-tmux}"
+
+# Parse --backend option
+for arg in "$@"; do
+  case "$arg" in
+    --backend=*)
+      BACKEND="${arg#--backend=}"
+      ;;
+    --backend)
+      # Next arg is the backend type
+      shift
+      BACKEND="$1"
+      ;;
+  esac
+done
+
 case "${1:-}" in
   start)
-    cd "$PROJECT_DIR" && pnpm run start
+    if [ "$BACKEND" = "agent-cli" ]; then
+      cd "$PROJECT_DIR" && pnpm run start:agent-cli
+    else
+      cd "$PROJECT_DIR" && pnpm run start
+    fi
     ;;
   stop)
-    cd "$PROJECT_DIR" && pnpm run stop
+    if [ "$BACKEND" = "agent-cli" ]; then
+      cd "$PROJECT_DIR" && pnpm run stop:agent-cli
+    else
+      cd "$PROJECT_DIR" && pnpm run stop
+    fi
     ;;
   send)
     shift
     cd "$PROJECT_DIR" && pnpm run send -- "$@"
     ;;
   status)
-    cd "$PROJECT_DIR" && pnpm run status
+    if [ "$BACKEND" = "agent-cli" ]; then
+      cd "$PROJECT_DIR" && pnpm run status:agent-cli
+    else
+      cd "$PROJECT_DIR" && pnpm run status
+    fi
     ;;
   apoint)
     tmux attach -t producer
@@ -25,15 +53,25 @@ case "${1:-}" in
     cd "$PROJECT_DIR" && pnpm run monitor
     ;;
   *)
-    echo "Usage: layers [start|stop|send|status|apoint]"
+    echo "Usage: layers [command] [options]"
     echo ""
     echo "Commands:"
-    echo "  (none)   Start monitor mode"
     echo "  start    Start all agents"
     echo "  stop     Stop all agents"
     echo "  send     Send a message to an agent"
     echo "  status   Show the status of agents"
-    echo "  apoint   Attach to producer session"
+    echo "  apoint   Attach to producer session (tmux mode only)"
+    echo ""
+    echo "Options:"
+    echo "  --backend=tmux|agent-cli   Select backend (default: tmux)"
+    echo ""
+    echo "Environment variables:"
+    echo "  LAYERS_BACKEND   Backend type: tmux or agent-cli (default: tmux)"
+    echo ""
+    echo "Examples:"
+    echo "  ./layers start                    # Start with tmux backend (default)"
+    echo "  ./layers start --backend=agent-cli # Start with agent-cli backend"
+    echo "  LAYERS_BACKEND=agent-cli ./layers start"
     exit 1
     ;;
 esac

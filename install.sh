@@ -125,7 +125,7 @@ is_layers_repo() {
 
 # サブディレクトリにLayersをクローンまたは更新する関数
 clone_to_subdir() {
-  INSTALL_DIR="$INSTALL_DIR/layers"
+  INSTALL_DIR="$INSTALL_DIR/.layers"
   info "Layersを $INSTALL_DIR にクローンします..."
   if [ -d "$INSTALL_DIR/.git" ] && is_layers_repo "$INSTALL_DIR"; then
     # サブディレクトリに既にLayersリポジトリがある場合は更新
@@ -340,19 +340,28 @@ create_layers_command() {
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$SCRIPT_DIR"
 
+# バックエンドの選択（環境変数で変更可能）
+LAYERS_BACKEND="${LAYERS_BACKEND:-tmux}"
+
 case "${1:-}" in
   start)
-    cd "$PROJECT_DIR" && pnpm run start
+    shift
+    cd "$PROJECT_DIR" && pnpm run start -- --backend "$LAYERS_BACKEND" "$@"
     ;;
   stop)
-    cd "$PROJECT_DIR" && pnpm run stop
+    shift
+    cd "$PROJECT_DIR" && pnpm run stop -- --backend "$LAYERS_BACKEND" "$@"
     ;;
   send)
     shift
     cd "$PROJECT_DIR" && pnpm run send -- "$@"
     ;;
   status)
-    cd "$PROJECT_DIR" && pnpm run status
+    cd "$PROJECT_DIR" && pnpm run status -- --backend "$LAYERS_BACKEND"
+    ;;
+  live)
+    shift
+    cd "$PROJECT_DIR" && pnpm run live -- --backend "$LAYERS_BACKEND" "$@"
     ;;
   apoint)
     tmux attach -t producer
@@ -361,7 +370,7 @@ case "${1:-}" in
     cd "$PROJECT_DIR" && pnpm run monitor
     ;;
   *)
-    echo "Usage: layers [start|stop|send|status|apoint]"
+    echo "Usage: layers [start|stop|send|status|live|apoint]"
     echo ""
     echo "Commands:"
     echo "  (none)   Start monitor mode"
@@ -369,7 +378,11 @@ case "${1:-}" in
     echo "  stop     Stop all agents"
     echo "  send     Send a message to an agent"
     echo "  status   Show the status of agents"
+    echo "  live     Start live status view"
     echo "  apoint   Attach to producer session"
+    echo ""
+    echo "Environment variables:"
+    echo "  LAYERS_BACKEND  Backend type: tmux (default) or agent-cli"
     exit 1
     ;;
 esac
@@ -409,8 +422,7 @@ fi
 if command -v tmux &> /dev/null; then
   success "tmux: $(tmux -V)"
 else
-  error "tmux が見つかりません"
-  CHECK_PASSED=false
+  warn "tmux が見つかりません（agent-cliバックエンド使用時は不要です）"
 fi
 
 if [ -d "$PROJECT_DIR/.layers/dist" ]; then
@@ -421,15 +433,21 @@ else
 fi
 
 # -------------------------------------------------------------------------
-# 11. Claude Code CLI の案内
+# 11. Claude Code CLI / agent-cli の案内
 # -------------------------------------------------------------------------
 echo ""
+echo "=== エージェントバックエンド ==="
+echo ""
+echo "  Layersは以下の2つのバックエンドをサポートしています:"
+echo ""
+echo "  1. tmux + Claude Code CLI (デフォルト)"
+echo "     従来のtmuxベースのマルチエージェントシステム"
+echo ""
+
 if command -v claude &> /dev/null; then
   success "Claude Code CLI: インストール済み"
 else
   warn "Claude Code CLI がインストールされていません。"
-  echo ""
-  echo "  Layers のエージェント機能を使用するには Claude Code CLI が必要です。"
   echo ""
   echo "  インストール方法:"
   echo "    npm install -g @anthropic-ai/claude-code"
@@ -438,6 +456,23 @@ else
   echo "    claude login"
   echo ""
   echo "  ※ Claude Max/Pro サブスクリプション または Anthropic API Key が必要です。"
+fi
+
+echo ""
+echo "  2. agent-cli (代替バックエンド)"
+echo "     tmux不要のスタンドアロンバックエンド。UnixドメインソケットによるIPC通信"
+echo ""
+
+if command -v agent-cli &> /dev/null; then
+  success "agent-cli: インストール済み ($(agent-cli --version 2>/dev/null || echo 'version unknown'))"
+else
+  echo "  agent-cliはインストールされていません（オプション）"
+  echo ""
+  echo "  インストール方法:"
+  echo "    curl -fsSL https://raw.githubusercontent.com/aquaxis/agent-cli/main/install.sh | sh"
+  echo ""
+  echo "  ※ agent-cliを使用する場合は、LAYERS_BACKEND=agent-cli を設定してください"
+  echo "    例: LAYERS_BACKEND=agent-cli ./layers start"
 fi
 
 # -------------------------------------------------------------------------
@@ -458,9 +493,12 @@ if [ "$EXEC_MODE" = "pipe" ]; then
   echo ""
 fi
 echo "  次のステップ:"
-echo "    ./layers          # モニターモードを開始"
-echo "    ./layers start    # 全エージェントを起動"
+echo "    ./layers          # モニターモードを開始（tmuxバックエンド）"
+echo "    ./layers start    # 全エージェントを起動（tmuxバックエンド）"
 echo "    ./layers stop     # 全エージェントを停止"
+echo ""
+echo "  agent-cliバックエンドを使用する場合:"
+echo "    LAYERS_BACKEND=agent-cli ./layers start"
 echo ""
 echo "  より詳細なコマンド:"
 echo "    pnpm run status   # ステータス確認"

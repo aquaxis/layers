@@ -1,5 +1,6 @@
 import { AgentManager } from '../agents/AgentManager.js';
-import { AgentStatus, AgentRole } from '../agents/types.js';
+import { AgentCliController } from '../agents/AgentCliController.js';
+import { AgentStatus, AgentRole, BackendType } from '../agents/types.js';
 import { Monitor } from './Monitor.js';
 
 export interface LiveViewOptions {
@@ -13,6 +14,8 @@ interface AgentLiveStatus extends AgentStatus {
 export class LiveView {
   private timeoutId: NodeJS.Timeout | null = null;
   private isRunning: boolean = false;
+  private agentCliController: AgentCliController | null;
+  private backend: BackendType;
 
   // 定数定義
   private static readonly DEFAULT_INTERVAL = 3000;
@@ -26,8 +29,13 @@ export class LiveView {
   constructor(
     private agentManager: AgentManager,
     private monitor: Monitor,
-    private options: LiveViewOptions = {}
-  ) {}
+    private options: LiveViewOptions = {},
+    agentCliController?: AgentCliController,
+    backend: BackendType = 'claude'
+  ) {
+    this.agentCliController = agentCliController || null;
+    this.backend = backend;
+  }
 
   /**
    * リアルタイム表示を開始
@@ -152,12 +160,9 @@ export class LiveView {
     for (const status of statuses) {
       const sessionName = status.sessionName.padEnd(16);
       const role = this.formatRole(status.role).padEnd(15);
-      const state = status.isRunning ? '\x1b[32m● 稼働\x1b[0m' : '\x1b[31m○ 停止\x1b[0m';
-      const activity = status.latestActivity.padEnd(28);
-
-      // 状態の文字列は色コードを含むため、パディング調整
       const stateDisplay = status.isRunning ? '● 稼働' : '○ 停止';
       const statePadded = stateDisplay.padEnd(6);
+      const activity = status.latestActivity.padEnd(28);
 
       console.log(
         `│ ${sessionName} │ ${role} │ ${status.isRunning ? '\x1b[32m' : '\x1b[31m'}${statePadded}\x1b[0m │ ${activity} │`

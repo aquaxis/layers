@@ -3,23 +3,39 @@ import { mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { TmuxController } from '../tmux/TmuxController.js';
 import { Logger } from '../monitoring/Logger.js';
+import { AgentCliController } from './AgentCliController.js';
 import {
   AgentConfig,
   AgentStatus,
   AgentsConfig,
+  BackendType,
   HealthCheckResult,
 } from './types.js';
 
 export class AgentManager {
   private agents: AgentConfig[] = [];
   private projectRoot: string;
+  private _backend: BackendType;
 
   constructor(
     private tmux: TmuxController = new TmuxController(),
     private logger: Logger = new Logger(),
-    projectRoot?: string
+    private agentCli: AgentCliController = new AgentCliController(),
+    projectRoot?: string,
+    backend: BackendType = 'claude'
   ) {
     this.projectRoot = projectRoot || process.cwd();
+    this._backend = backend;
+  }
+
+  /** Set the backend type for agent management */
+  setBackend(backend: BackendType): void {
+    this._backend = backend;
+  }
+
+  /** Get the current backend type */
+  getBackend(): BackendType {
+    return this._backend;
   }
 
   async loadConfig(configPath?: string): Promise<void> {
@@ -27,7 +43,7 @@ export class AgentManager {
     const content = await readFile(path, 'utf-8');
     const config: AgentsConfig = JSON.parse(content);
     this.agents = config.agents;
-    await this.logger.info('AgentManager', `Loaded ${this.agents.length} agents from config`);
+    await this.logger.info('AgentManager', `Loaded ${this.agents.length} agents from config (backend: ${this._backend})`);
   }
 
   async startAll(): Promise<void> {
@@ -42,6 +58,19 @@ export class AgentManager {
       }
     } catch (error) {
       await this.logger.error('AgentManager', `Failed to create logs directory: ${logsDir}`, { error: String(error) });
+    }
+
+    // Ensure .layers/registry directory exists (for agent-cli IPC)
+    if (this._backend === 'agent-cli') {
+      const registryDir = join(this.projectRoot, '.layers', 'registry');
+      try {
+        if (!existsSync(registryDir)) {
+          mkdirSync(registryDir, { recursive: true });
+          await this.logger.info('AgentManager', `Created registry directory: ${registryDir}`);
+        }
+      } catch (error) {
+        await this.logger.error('AgentManager', `Failed to create registry directory: ${registryDir}`, { error: String(error) });
+      }
     }
 
     // Start in order: producer -> director -> leads -> members
@@ -89,14 +118,24 @@ export class AgentManager {
       throw new Error(`Agent not found: ${sessionName}`);
     }
 
+    const agentBackend = agent.backend || this._backend;
+
+    if (agentBackend === 'agent-cli') {
+      await this.agentCli.startAgent(agent, this.projectRoot);
+    } else {
+      await this.startClaudeAgent(agent);
+    }
+  }
+
+  private async startClaudeAgent(agent: AgentConfig): Promise<void> {
     // Check if already running
-    if (await this.tmux.hasSession(sessionName)) {
-      await this.logger.warn('AgentManager', `Session already exists: ${sessionName}`);
+    if (await this.tmux.hasSession(agent.sessionName)) {
+      await this.logger.warn('AgentManager', `Session already exists: ${agent.sessionName}`);
       return;
     }
 
-    // Create session
-    await this.tmux.newSession(sessionName, {
+    // Create tmux session
+    await this.tmux.newSession(agent.sessionName, {
       workingDir: this.projectRoot,
       detached: true,
     });
@@ -106,15 +145,26 @@ export class AgentManager {
 
     // Build claude command
     const claudeCmd = this.buildClaudeCommand(agent);
-    await this.tmux.sendKeys(sessionName, claudeCmd, { enter: true });
+    await this.tmux.sendKeys(agent.sessionName, claudeCmd, { enter: true });
 
-    await this.logger.info('AgentManager', `Started agent: ${sessionName}`);
+    await this.logger.info('AgentManager', `Started claude agent: ${agent.sessionName}`);
   }
 
   async stopAgent(sessionName: string): Promise<void> {
-    if (await this.tmux.hasSession(sessionName)) {
-      await this.tmux.killSession(sessionName);
-      await this.logger.info('AgentManager', `Stopped agent: ${sessionName}`);
+    const agent = this.agents.find((a) => a.sessionName === sessionName);
+    if (!agent) {
+      return;
+    }
+
+    const agentBackend = agent.backend || this._backend;
+
+    if (agentBackend === 'agent-cli') {
+      await this.agentCli.stopAgent(sessionName);
+    } else {
+      if (await this.tmux.hasSession(sessionName)) {
+        await this.tmux.killSession(sessionName);
+        await this.logger.info('AgentManager', `Stopped claude agent: ${sessionName}`);
+      }
     }
   }
 
@@ -122,13 +172,22 @@ export class AgentManager {
     const statuses: AgentStatus[] = [];
 
     for (const agent of this.agents) {
-      const isRunning = await this.tmux.hasSession(agent.sessionName);
+      const agentBackend = agent.backend || this._backend;
+      let isRunning: boolean;
+
+      if (agentBackend === 'agent-cli') {
+        isRunning = await this.agentCli.isRunning(agent.sessionName);
+      } else {
+        isRunning = await this.tmux.hasSession(agent.sessionName);
+      }
+
       statuses.push({
         sessionName: agent.sessionName,
         role: agent.role,
         isRunning,
         superior: agent.superior,
         subordinates: agent.subordinates,
+        backend: agentBackend,
       });
     }
 
@@ -152,20 +211,32 @@ export class AgentManager {
   async recover(sessionName: string, maxRetries: number = 3): Promise<void> {
     await this.logger.info('AgentManager', `Attempting to recover: ${sessionName}`);
 
+    const agent = this.agents.find((a) => a.sessionName === sessionName);
+    if (!agent) {
+      throw new Error(`Agent not found: ${sessionName}`);
+    }
+
+    const agentBackend = agent.backend || this._backend;
+
     for (let i = 0; i < maxRetries; i++) {
       try {
-        // Force stop if exists
-        if (await this.tmux.hasSession(sessionName)) {
-          await this.tmux.killSession(sessionName);
-          await this.sleep(500);
-        }
+        // Force stop if running
+        await this.stopAgent(sessionName);
+        await this.sleep(500);
 
         // Restart
         await this.startAgent(sessionName);
 
         // Verify
         await this.sleep(2000);
-        if (await this.tmux.hasSession(sessionName)) {
+        let isRunning: boolean;
+        if (agentBackend === 'agent-cli') {
+          isRunning = await this.agentCli.isRunning(sessionName);
+        } else {
+          isRunning = await this.tmux.hasSession(sessionName);
+        }
+
+        if (isRunning) {
           await this.logger.info('AgentManager', `Recovered: ${sessionName}`);
           return;
         }

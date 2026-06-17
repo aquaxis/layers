@@ -1,17 +1,21 @@
 import { TmuxController } from '../tmux/TmuxController.js';
-import { HealthCheckResult } from '../agents/types.js';
+import { AgentCliController } from '../agents/AgentCliController.js';
+import { HealthCheckResult, BackendType } from '../agents/types.js';
 import { Logger } from './Logger.js';
 
 export class Monitor {
   private watchInterval: NodeJS.Timeout | null = null;
+  private agentCli: AgentCliController;
 
   constructor(
     private tmux: TmuxController = new TmuxController(),
-    private logger: Logger = new Logger()
-  ) {}
+    private logger: Logger = new Logger(),
+    agentCli?: AgentCliController
+  ) {
+    this.agentCli = agentCli || new AgentCliController();
+  }
 
-  async healthCheck(): Promise<HealthCheckResult> {
-    const sessions = await this.tmux.listSessions();
+  async healthCheck(backend: BackendType = 'claude'): Promise<HealthCheckResult> {
     const expectedSessions = [
       'producer',
       'director',
@@ -29,10 +33,23 @@ export class Monitor {
       'tester_2',
     ];
 
-    const agents = expectedSessions.map((sessionName) => ({
-      sessionName,
-      isRunning: sessions.some((s) => s.name === sessionName),
-    }));
+    let agents: { sessionName: string; isRunning: boolean }[];
+
+    if (backend === 'agent-cli') {
+      // For agent-cli, check via agent-cli list and process map
+      const runningNames = await this.agentCli.listAgents();
+      agents = expectedSessions.map((sessionName) => ({
+        sessionName,
+        isRunning: runningNames.includes(sessionName) || this.agentCli.getRunningAgentNames().includes(sessionName),
+      }));
+    } else {
+      // For claude/tmux, check via tmux sessions
+      const sessions = await this.tmux.listSessions();
+      agents = expectedSessions.map((sessionName) => ({
+        sessionName,
+        isRunning: sessions.some((s) => s.name === sessionName),
+      }));
+    }
 
     const unhealthyCount = agents.filter((a) => !a.isRunning).length;
 
@@ -44,33 +61,53 @@ export class Monitor {
   }
 
   async captureLog(sessionName: string, lines: number = 100): Promise<string> {
+    // Try tmux first
     try {
       return await this.tmux.capturePane(sessionName, {
         startLine: -lines,
       });
     } catch {
-      return '';
+      // For agent-cli, read from log files
+      try {
+        const { readFile } = await import('fs/promises');
+        const { join } = await import('path');
+        const logFile = join('.layers', 'logs', `log_${sessionName}_latest.md`);
+        const content = await readFile(logFile, 'utf-8');
+        const contentLines = content.split('\n');
+        return contentLines.slice(-lines).join('\n');
+      } catch {
+        return '';
+      }
     }
   }
 
-  async listAllSessions(): Promise<
+  async listAllSessions(backend: BackendType = 'claude'): Promise<
     { sessionName: string; isRunning: boolean; windows: number }[]
   > {
-    const sessions = await this.tmux.listSessions();
-    return sessions.map((s) => ({
-      sessionName: s.name,
-      isRunning: true,
-      windows: s.windows,
-    }));
+    if (backend === 'agent-cli') {
+      const runningNames = await this.agentCli.listAgents();
+      return runningNames.map((name) => ({
+        sessionName: name,
+        isRunning: true,
+        windows: 1,
+      }));
+    } else {
+      const sessions = await this.tmux.listSessions();
+      return sessions.map((s) => ({
+        sessionName: s.name,
+        isRunning: true,
+        windows: s.windows,
+      }));
+    }
   }
 
-  startWatching(intervalMs: number = 5000): void {
+  startWatching(intervalMs: number = 5000, backend: BackendType = 'claude'): void {
     if (this.watchInterval) {
       this.stopWatching();
     }
 
     this.watchInterval = setInterval(async () => {
-      const result = await this.healthCheck();
+      const result = await this.healthCheck(backend);
       if (!result.healthy) {
         await this.logger.warn(
           'Monitor',
@@ -91,10 +128,11 @@ export class Monitor {
     }
   }
 
-  async displayStatus(): Promise<void> {
-    const result = await this.healthCheck();
+  async displayStatus(backend: BackendType = 'claude'): Promise<void> {
+    const result = await this.healthCheck(backend);
 
     console.log('\n=== Layers Agent Status ===\n');
+    console.log(`Backend: ${backend}`);
     console.log(`Total Agents: 14`);
     console.log(`Running: ${14 - result.unhealthyCount}`);
     console.log(`Stopped: ${result.unhealthyCount}`);
@@ -105,10 +143,10 @@ export class Monitor {
 
     // Group by role
     const groups = {
-      '統括': ['producer', 'director'],
-      'リード': ['lead_design', 'lead_prog', 'lead_qa'],
-      'デザイン': ['designer_1', 'designer_2'],
-      'プログラム': ['programmer_1', 'programmer_2', 'programmer_3', 'programmer_4', 'programmer_5'],
+      'Management': ['producer', 'director'],
+      'Lead': ['lead_design', 'lead_prog', 'lead_qa'],
+      'Design': ['designer_1', 'designer_2'],
+      'Programming': ['programmer_1', 'programmer_2', 'programmer_3', 'programmer_4', 'programmer_5'],
       'QA': ['tester_1', 'tester_2'],
     };
 

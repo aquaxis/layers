@@ -1,0 +1,32 @@
+# Layers - agent-cli Configuration Template
+# Copy this file to .layers/agent-cli.toml and customize as needed.
+#
+# For more details, see: https://github.com/aquaxis/agent-cli
+
+[provider]
+kind = "claude"
+
+[provider.claude]
+api_key_env = "ANTHROPIC_API_KEY"
+model = "claude-sonnet-4-5"
+
+# Uncomment to use Ollama backend
+# [provider.ollama]
+# model = "glm-5.1:cloud"
+# base_url = "http://127.0.0.1:11434"
+
+[runtime]
+auto_approve_tools = true
+registry_dir = ".layers/registry"
+agents_dir = ".layers/personas"
+max_tool_iterations = 48
+
+[tools]
+enabled = ["shell", "fs_read", "fs_write", "send_to"]
+
+[tools.shell]
+timeout_secs = 120
+max_output_kb = 512
+
+[ui]
+show_thinking = "collapsed"

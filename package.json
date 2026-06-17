@@ -1,13 +1,16 @@
 {
   "name": "layers",
-  "version": "1.0.0",
-  "description": "階層的マルチエージェントシステム - tmux + Claude Code CLI",
+  "version": "1.1.0",
+  "description": "Hierarchical Multi-Agent System - tmux + Claude Code CLI / agent-cli",
   "type": "module",
   "main": ".layers/dist/index.js",
   "scripts": {
     "start": "tsx .layers/src/index.ts start",
+    "start:agent-cli": "tsx .layers/src/index.ts start --backend agent-cli",
     "stop": "tsx .layers/src/index.ts stop",
+    "stop:agent-cli": "tsx .layers/src/index.ts stop --backend agent-cli",
     "status": "tsx .layers/src/index.ts status",
+    "status:agent-cli": "tsx .layers/src/index.ts status --backend agent-cli",
     "send": "tsx .layers/src/index.ts send",
     "monitor": "tsx .layers/src/index.ts monitor",
     "live": "tsx .layers/src/index.ts live",
@@ -20,6 +23,7 @@
     "multi-agent",
     "tmux",
     "claude-code",
+    "agent-cli",
     "typescript"
   ],
   "author": "",

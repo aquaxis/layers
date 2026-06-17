@@ -6,7 +6,12 @@
       "superior": null,
       "subordinates": ["director"],
       "promptFile": ".layers/prompts/producer.md",
-      "permissionMode": "dangerouslySkip"
+      "permissionMode": "dangerouslySkip",
+      "backend": "claude",
+      "personaFile": ".layers/personas/producer.md",
+      "provider": "claude",
+      "model": "claude-opus-4-7",
+      "autoApproveTools": true
     },
     {
       "sessionName": "director",
@@ -14,7 +19,12 @@
       "superior": "producer",
       "subordinates": ["lead_design", "lead_prog", "lead_qa"],
       "promptFile": ".layers/prompts/director.md",
-      "permissionMode": "dangerouslySkip"
+      "permissionMode": "dangerouslySkip",
+      "backend": "claude",
+      "personaFile": ".layers/personas/director.md",
+      "provider": "claude",
+      "model": "claude-opus-4-7",
+      "autoApproveTools": true
     },
     {
       "sessionName": "lead_design",
@@ -22,7 +32,12 @@
       "superior": "director",
       "subordinates": ["designer_1", "designer_2"],
       "promptFile": ".layers/prompts/lead_design.md",
-      "permissionMode": "dangerouslySkip"
+      "permissionMode": "dangerouslySkip",
+      "backend": "claude",
+      "personaFile": ".layers/personas/lead_design.md",
+      "provider": "claude",
+      "model": "claude-opus-4-7",
+      "autoApproveTools": true
     },
     {
       "sessionName": "lead_prog",
@@ -30,7 +45,12 @@
       "superior": "director",
       "subordinates": ["programmer_1", "programmer_2", "programmer_3", "programmer_4", "programmer_5"],
       "promptFile": ".layers/prompts/lead_prog.md",
-      "permissionMode": "dangerouslySkip"
+      "permissionMode": "dangerouslySkip",
+      "backend": "claude",
+      "personaFile": ".layers/personas/lead_prog.md",
+      "provider": "claude",
+      "model": "claude-opus-4-7",
+      "autoApproveTools": true
     },
     {
       "sessionName": "lead_qa",
@@ -38,7 +58,12 @@
       "superior": "director",
       "subordinates": ["tester_1", "tester_2"],
       "promptFile": ".layers/prompts/lead_qa.md",
-      "permissionMode": "dangerouslySkip"
+      "permissionMode": "dangerouslySkip",
+      "backend": "claude",
+      "personaFile": ".layers/personas/lead_qa.md",
+      "provider": "claude",
+      "model": "claude-opus-4-7",
+      "autoApproveTools": true
     },
     {
       "sessionName": "designer_1",
@@ -46,7 +71,12 @@
       "superior": "lead_design",
       "subordinates": [],
       "promptFile": ".layers/prompts/designer.md",
-      "permissionMode": "dangerouslySkip"
+      "permissionMode": "dangerouslySkip",
+      "backend": "claude",
+      "personaFile": ".layers/personas/designer.md",
+      "provider": "claude",
+      "model": "claude-opus-4-7",
+      "autoApproveTools": true
     },
     {
       "sessionName": "designer_2",
@@ -54,7 +84,12 @@
       "superior": "lead_design",
       "subordinates": [],
       "promptFile": ".layers/prompts/designer.md",
-      "permissionMode": "dangerouslySkip"
+      "permissionMode": "dangerouslySkip",
+      "backend": "claude",
+      "personaFile": ".layers/personas/designer.md",
+      "provider": "claude",
+      "model": "claude-opus-4-7",
+      "autoApproveTools": true
     },
     {
       "sessionName": "programmer_1",
@@ -62,7 +97,12 @@
       "superior": "lead_prog",
       "subordinates": [],
       "promptFile": ".layers/prompts/programmer.md",
-      "permissionMode": "dangerouslySkip"
+      "permissionMode": "dangerouslySkip",
+      "backend": "claude",
+      "personaFile": ".layers/personas/programmer.md",
+      "provider": "claude",
+      "model": "claude-opus-4-7",
+      "autoApproveTools": true
     },
     {
       "sessionName": "programmer_2",
@@ -70,7 +110,12 @@
       "superior": "lead_prog",
       "subordinates": [],
       "promptFile": ".layers/prompts/programmer.md",
-      "permissionMode": "dangerouslySkip"
+      "permissionMode": "dangerouslySkip",
+      "backend": "claude",
+      "personaFile": ".layers/personas/programmer.md",
+      "provider": "claude",
+      "model": "claude-opus-4-7",
+      "autoApproveTools": true
     },
     {
       "sessionName": "programmer_3",
@@ -78,7 +123,12 @@
       "superior": "lead_prog",
       "subordinates": [],
       "promptFile": ".layers/prompts/programmer.md",
-      "permissionMode": "dangerouslySkip"
+      "permissionMode": "dangerouslySkip",
+      "backend": "claude",
+      "personaFile": ".layers/personas/programmer.md",
+      "provider": "claude",
+      "model": "claude-opus-4-7",
+      "autoApproveTools": true
     },
     {
       "sessionName": "programmer_4",
@@ -86,7 +136,12 @@
       "superior": "lead_prog",
       "subordinates": [],
       "promptFile": ".layers/prompts/programmer.md",
-      "permissionMode": "dangerouslySkip"
+      "permissionMode": "dangerouslySkip",
+      "backend": "claude",
+      "personaFile": ".layers/personas/programmer.md",
+      "provider": "claude",
+      "model": "claude-opus-4-7",
+      "autoApproveTools": true
     },
     {
       "sessionName": "programmer_5",
@@ -94,7 +149,12 @@
       "superior": "lead_prog",
       "subordinates": [],
       "promptFile": ".layers/prompts/programmer.md",
-      "permissionMode": "dangerouslySkip"
+      "permissionMode": "dangerouslySkip",
+      "backend": "claude",
+      "personaFile": ".layers/personas/programmer.md",
+      "provider": "claude",
+      "model": "claude-opus-4-7",
+      "autoApproveTools": true
     },
     {
       "sessionName": "tester_1",
@@ -102,7 +162,12 @@
       "superior": "lead_qa",
       "subordinates": [],
       "promptFile": ".layers/prompts/tester.md",
-      "permissionMode": "dangerouslySkip"
+      "permissionMode": "dangerouslySkip",
+      "backend": "claude",
+      "personaFile": ".layers/personas/tester.md",
+      "provider": "claude",
+      "model": "claude-opus-4-7",
+      "autoApproveTools": true
     },
     {
       "sessionName": "tester_2",
@@ -110,7 +175,12 @@
       "superior": "lead_qa",
       "subordinates": [],
       "promptFile": ".layers/prompts/tester.md",
-      "permissionMode": "dangerouslySkip"
+      "permissionMode": "dangerouslySkip",
+      "backend": "claude",
+      "personaFile": ".layers/personas/tester.md",
+      "provider": "claude",
+      "model": "claude-opus-4-7",
+      "autoApproveTools": true
     }
   ]
 }

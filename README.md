@@ -1,19 +1,15 @@
-# Layers - 階層的マルチエージェントシステム
+# Layers - Hierarchical Multi-Agent System
 
-tmux + Claude Code CLIを活用した、ゲーム開発組織の階層構造を模倣した自律型マルチエージェントシステム。
-
-## 概要
-
-Layersは、14名のAIエージェントが階層的に連携してソフトウェア開発を行うシステムです。
+A hierarchical multi-agent system for game/software development organization structure, using tmux + Claude Code CLI or agent-cli.
 
 ```
-COO（人間）
+COO (Human)
     │
     ▼
-Producer（プロデューサー）
+Producer
     │
     ▼
-Director（ディレクター）
+Director
     │
     ├─────────────────┬─────────────────┐
     ▼                 ▼                 ▼
@@ -24,96 +20,115 @@ Lead Designer    Lead Programmer     QA Lead
  D1  D2        PG1 PG2 PG3 PG4 PG5    T1  T2
 ```
 
-## 必要環境
+## Features
+
+- **Dual backend support**: Run agents with Claude Code CLI (tmux) or agent-cli (standalone processes)
+- **14 hierarchical AI agents** collaborating in a development organization structure
+- **Inter-agent communication**: tmux send-keys (Claude CLI) or send_to tool (agent-cli)
+- **Real-time monitoring**: Dashboard view of all agent statuses
+- **Automatic dependency installation**: Node.js, pnpm, tmux, and optionally agent-cli
+
+## Prerequisites
+
+### Common
 
 - Git
-- Node.js 20.x LTS 以上
-- pnpm（推奨パッケージマネージャ）
-- tmux 3.x 以上
-- Claude Code CLI（`claude`コマンド）
-- Claude Max/Pro サブスクリプション または Anthropic API Key
+- Node.js 20.x LTS or later
+- pnpm (recommended package manager)
 
-> **Note**: Windowsをご利用の場合は、WSL2（Windows Subsystem for Linux 2）環境が必要です。tmuxはネイティブWindowsでは動作しません。以下のコマンドはすべてWSL2のターミナル（Ubuntu等）で実行してください。
+### For Claude Code CLI backend
 
-### Node.js のインストール
+- tmux 3.x or later
+- Claude Code CLI (`claude` command)
+- Claude Max/Pro subscription or Anthropic API Key
 
-nvm（Node Version Manager）の利用を推奨します。
+### For agent-cli backend
+
+- agent-cli (installed automatically or manually via `install.sh`)
+- Anthropic API Key (for Claude backend), or local Ollama (for Ollama backend)
+
+> **Note**: On Windows, use WSL2 (Windows Subsystem for Linux 2). tmux and agent-cli require a Unix-like environment.
+
+### Node.js Installation
+
+We recommend using nvm (Node Version Manager).
 
 ```bash
-# nvm のインストール
+# Install nvm
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
 
-# シェルの再読み込み
-source ~/.bashrc  # または source ~/.zshrc
+# Reload shell
+source ~/.bashrc  # or source ~/.zshrc
 
-# Node.js 20.x LTS のインストール
+# Install Node.js 20.x LTS
 nvm install 20
 nvm use 20
 
-# バージョン確認
-node -v  # v20.x.x が表示されること
+# Verify
+node -v  # Should show v20.x.x
 ```
 
-### pnpm のインストール
+### pnpm Installation
 
 ```bash
-# npm でインストール
+# Install via npm
 npm install -g pnpm
 
-# または corepack で有効化（Node.js 16.13以降）
+# Or enable via corepack (Node.js 16.13+)
 corepack enable pnpm
 
-# バージョン確認
+# Verify
 pnpm -v
 ```
 
-### tmux のインストール
+### tmux Installation (Claude CLI backend only)
 
 ```bash
-# Linux（Debian/Ubuntu）
+# Linux (Debian/Ubuntu)
 sudo apt update && sudo apt install -y tmux
 
-# macOS（Homebrew）
+# macOS (Homebrew)
 brew install tmux
 
-# バージョン確認（3.x 以上であること）
+# Verify (3.x or later required)
 tmux -V
 ```
 
-### Claude Code CLI のインストール
+### agent-cli Installation
+
+agent-cli can be installed via the Layers install script (recommended) or manually:
 
 ```bash
-# グローバルインストール
-npm install -g @anthropic-ai/claude-code
+# One-liner install (recommended)
+curl -fsSL https://raw.githubusercontent.com/aquaxis/agent-cli/main/install.sh | sh
 
-# 認証（初回のみ・必須）
-claude login
-
-# バージョン確認
-claude --version
+# Or build from source
+git clone https://github.com/aquaxis/agent-cli.git
+cd agent-cli
+cargo install --path . --root "$HOME/.local"
 ```
 
-> **重要**: `claude login` による認証を完了しないと、エージェントが正常に動作しません。Claude Max/Pro サブスクリプション または Anthropic API Key が必要です。
+See the [agent-cli documentation](https://github.com/aquaxis/agent-cli) for more details on configuration and backends (Claude, Codex, Ollama, OpenCode, llama.cpp).
 
-## インストール
+## Installation
 
-### ワンライナーインストール（推奨）
+### One-liner install (recommended)
 
-以下のコマンド1つで、リポジトリのクローンから前提条件のインストール、ビルドまですべて自動で行います。
+This clones the repository and sets up everything automatically:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/aquaxis/layers/main/install.sh | sh
 ```
 
-インストール先はデフォルトでカレントディレクトリです。別のディレクトリにインストールする場合:
+To install in a specific directory:
 
 ```bash
 LAYERS_INSTALL_DIR=/path/to/dir curl -fsSL https://raw.githubusercontent.com/aquaxis/layers/main/install.sh | sh
 ```
 
-### スクリプトによるインストール（ローカル実行）
+### Local script install
 
-すでにリポジトリをクローン済みの場合は、プロジェクトディレクトリ内でスクリプトを実行できます。
+If you have already cloned the repository:
 
 ```bash
 git clone https://github.com/aquaxis/layers.git
@@ -122,197 +137,332 @@ chmod +x install.sh
 ./install.sh
 ```
 
-### スクリプトが自動的に行うこと
+### What the install script does
 
-- OS検出（Linux / macOS）
-- Node.js、pnpm、tmuxの有無チェックと未インストール時の自動インストール
-- リポジトリのクローン（ワンライナー実行時のみ）
-- `pnpm install` による依存パッケージのインストール
-- `pnpm run build` によるビルド
-- 動作確認チェック
-- Claude Code CLIが未インストールの場合のインストール案内
+- OS detection (Linux / macOS)
+- Checks and installs Node.js, pnpm, tmux, and agent-cli as needed
+- Clones the repository (one-liner mode only)
+- Runs `pnpm install` and `pnpm run build`
+- Runs health checks
+- Provides guidance for Claude Code CLI if not installed
 
-### 手動インストール
+### Manual install
 
 ```bash
-# 1. リポジトリのクローン
-git clone <repository-url>
+# 1. Clone the repository
+git clone https://github.com/aquaxis/layers.git
 cd layers
 
-# 2. 依存パッケージのインストール
+# 2. Install dependencies
 pnpm install
 
-# 3. ビルド
+# 3. Build
 pnpm run build
 
-# 4. 動作確認
+# 4. Verify
 pnpm run status
 ```
 
-### 動作確認チェックリスト
+### Health check checklist
 
-インストール完了後、以下を確認してください。
+After installation, verify the following:
 
 ```bash
-# 各ツールが利用可能であること
+# Required tools
 node -v          # v20.x.x
-pnpm -v          # バージョンが表示される
+pnpm -v          # Version displayed
+
+# Claude CLI backend only
 tmux -V          # tmux 3.x
-claude --version # バージョンが表示される
+claude --version # Version displayed
 
-# ビルドが成功すること
-pnpm run build   # エラーなく完了
+# agent-cli backend only
+agent-cli --version  # Version displayed
 
-# ステータスコマンドが実行可能であること
+# Build verification
+pnpm run build   # Completes without errors
+
+# Status check
 pnpm run status
 ```
 
-## ビルド
+## Build
 
 ```bash
-# TypeScriptのビルド
+# TypeScript build
 pnpm run build
 
-# リント
+# Lint
 pnpm run lint
 
-# テスト
+# Test
 pnpm run test
 ```
 
-## 使用方法
+## Usage
 
-### システムの起動
+### Starting the system
+
+#### Claude Code CLI backend (default)
 
 ```bash
 pnpm run start
+# or explicitly:
+pnpm run start -- --backend claude
 ```
 
-全14エージェントがtmuxセッションとして起動します。
+All 14 agents start as tmux sessions running `claude` with system prompts.
 
-### システムの停止
+#### agent-cli backend
+
+```bash
+pnpm run start -- --backend agent-cli
+```
+
+All 14 agents start as agent-cli processes using persona files for configuration.
+
+#### Specifying a provider (agent-cli backend only)
+
+```bash
+# Use Claude (default)
+pnpm run start -- --backend agent-cli --provider claude
+
+# Use Ollama
+pnpm run start -- --backend agent-cli --provider ollama
+
+# Use Codex (OpenAI)
+pnpm run start -- --backend agent-cli --provider codex
+
+# Use a custom model
+pnpm run start -- --backend agent-cli --provider claude --model claude-opus-4-7
+```
+
+### Stopping the system
 
 ```bash
 pnpm run stop
+# or with explicit backend:
+pnpm run stop -- --backend agent-cli
 ```
 
-### ステータス確認
+### Status check
 
 ```bash
 pnpm run status
 ```
 
-### メッセージ送信
+### Sending messages
 
 ```bash
-pnpm run send -- --to producer --type instruction --message "プロジェクトを開始してください"
+pnpm run send -- --to producer --type instruction --message "Start the project"
 ```
 
-オプション:
+Options:
 
-- `--to` : 送信先エージェント（必須）
-- `--type` : メッセージタイプ（instruction, report, question, answer, status, error, complete）（必須）
-- `--message` : メッセージ本文（必須）
-- `--from` : 送信者名（デフォルト: coo）
-- `--priority` : 優先度（low, normal, high, urgent）（デフォルト: normal）
+- `--to` : Target agent (required)
+- `--type` : Message type (instruction, report, question, answer, status, error, complete) (required)
+- `--message` : Message body (required)
+- `--from` : Sender name (default: coo)
+- `--priority` : Priority (low, normal, high, urgent) (default: normal)
 
-### 監視モード
+### Monitoring
 
 ```bash
 pnpm run monitor
 ```
 
-バックグラウンドでエージェントの正常性を監視し、異常検出時にログを出力します。Ctrl+Cで終了。
+Background agent health monitoring. Abnormal detections are logged. Press Ctrl+C to stop.
 
-### リアルタイム実行状況表示
+### Real-time dashboard
 
 ```bash
 pnpm run live
 ```
 
-全14エージェントの実行状況をターミナル上にダッシュボード形式で表示します。一定間隔（デフォルト3秒）で自動更新されます。
+Displays a real-time dashboard of all 14 agents with status and latest activity.
 
-各エージェントについて以下の情報が表示されます:
+Options:
 
-- **セッション名**: tmuxセッション名
-- **役割**: エージェントの役職
-- **状態**: 稼働中 / 停止
-- **最新アクティビティ**: 各エージェントが現在行っている作業内容
-
-オプション:
-
-- `--interval <ms>` : 更新間隔をミリ秒で指定（デフォルト: 3000）
+- `--interval <ms>` : Update interval in milliseconds (default: 3000)
 
 ```bash
-# 5秒間隔で更新
+# 5-second interval
 pnpm run live -- --interval 5000
 ```
 
-Ctrl+Cで終了。
+Press Ctrl+C to stop.
 
-> **`monitor` との違い**: `monitor`はバックグラウンドでの正常性監視（異常検出時にログ出力）を行うのに対し、`live`は人間が視覚的に全エージェントの状況をリアルタイムで把握するためのダッシュボードです。
-
-### エージェントへの接続
+### Connecting to an agent (Claude CLI backend)
 
 ```bash
-# プロデューサーに接続
+# Connect to producer
 tmux attach -t producer
 
-# ディレクターに接続
-tmux attach -t director
-
-# セッションからデタッチ: Ctrl+b d
+# Detach from session: Ctrl+b d
 ```
 
-### セッション一覧
+### Session list (Claude CLI backend)
 
 ```bash
 tmux ls
 ```
 
-## エージェント構成
+### Convenience script
 
-| 部門 | 役職 | セッション名 | 人数 |
-|------|------|--------------|------|
-| 統括 | プロデューサー | producer | 1 |
-| 統括 | ディレクター | director | 1 |
-| デザイン | リードデザイナー | lead_design | 1 |
-| デザイン | デザイナー | designer_1, designer_2 | 2 |
-| プログラム | リードプログラマー | lead_prog | 1 |
-| プログラム | プログラマー | programmer_1〜5 | 5 |
-| QA | QAリード | lead_qa | 1 |
-| QA | テスター | tester_1, tester_2 | 2 |
-| **合計** | | | **14** |
+The `layers` script provides quick access to common operations:
 
-## ディレクトリ構造
+```bash
+./layers              # Start monitor mode
+./layers start        # Start all agents (Claude CLI backend)
+./layers start agent-cli  # Start all agents (agent-cli backend)
+./layers stop         # Stop all agents
+./layers send         # Send a message
+./layers status       # Show agent status
+```
+
+## Agent Configuration
+
+### Agent definition
+
+Agents are configured in `.layers/src/config/agents.json`:
+
+```json
+{
+  "agents": [
+    {
+      "sessionName": "producer",
+      "role": "producer",
+      "superior": null,
+      "subordinates": ["director"],
+      "promptFile": ".layers/prompts/producer.md",
+      "permissionMode": "dangerouslySkip",
+      "backend": "agent-cli",
+      "provider": "claude",
+      "model": "claude-opus-4-7"
+    }
+  ]
+}
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `sessionName` | string | required | Agent identifier and process/session name |
+| `role` | string | required | Agent role (producer, director, lead_design, etc.) |
+| `superior` | string \| null | required | Superior agent name |
+| `subordinates` | string[] | required | List of subordinate agent names |
+| `promptFile` | string | required | Path to prompt file (Claude CLI) or persona file (agent-cli) |
+| `permissionMode` | string | "dangerouslySkip" | Permission mode for Claude CLI |
+| `backend` | string | "agent-cli" | Backend: "claude" or "agent-cli" |
+| `provider` | string | "claude" | AI provider for agent-cli (claude, codex, ollama, opencode, llama.cpp) |
+| `model` | string | undefined | Model override for agent-cli |
+| `personaFile` | string | auto | Path to agent-cli persona file (auto-generated if not set) |
+| `autoApproveTools` | boolean | true | Auto-approve tool usage in agent-cli |
+
+### Backend comparison
+
+| Feature | Claude CLI (`claude`) | agent-cli |
+|---------|----------------------|-----------|
+| Process model | tmux sessions | Standalone processes |
+| Communication | `tmux send-keys` | `send_to` tool (IPC) |
+| Configuration | `--system-prompt-file` | Persona files (YAML + Markdown) |
+| Dependencies | tmux, Claude CLI | agent-cli binary |
+| Backends | Anthropic only | Claude, Codex, Ollama, OpenCode, llama.cpp |
+| Message format | JSON in tmux | Built-in IPC |
+
+### Persona files
+
+For the agent-cli backend, persona files are stored in `.layers/personas/`. Each persona file uses YAML frontmatter + Markdown body format:
+
+```markdown
+---
+name: producer
+role: Producer - Overall project oversight
+skills:
+  - Project management
+  - Budget and schedule control
+  - Multi-agent coordination
+allowed_tools:
+  - shell
+  - fs_read
+  - fs_write
+  - send_to
+---
+
+# You are the Producer Agent
+
+[Agent instructions...]
+```
+
+Persona files are auto-generated from prompt files if not present. You can also create custom persona files manually.
+
+### agent-cli configuration
+
+A shared configuration file is generated at `.layers/agent-cli.toml`:
+
+```toml
+[provider]
+kind = "claude"
+
+[provider.claude]
+api_key_env = "ANTHROPIC_API_KEY"
+model = "claude-opus-4-7"
+
+[runtime]
+registry_dir = ".layers/registry"
+agents_dir = ".layers/personas"
+auto_approve_tools = true
+max_tool_iterations = 48
+
+[tools]
+enabled = ["shell", "fs_read", "fs_write", "send_to"]
+```
+
+## Agent Structure
+
+| Department | Role | Session Name | Count |
+|------------|------|-------------|-------|
+| Executive | Producer | producer | 1 |
+| Executive | Director | director | 1 |
+| Design | Lead Designer | lead_design | 1 |
+| Design | Designer | designer_1, designer_2 | 2 |
+| Programming | Lead Programmer | lead_prog | 1 |
+| Programming | Programmer | programmer_1〜5 | 5 |
+| QA | QA Lead | lead_qa | 1 |
+| QA | Tester | tester_1, tester_2 | 2 |
+| **Total** | | | **14** |
+
+## Directory Structure
 
 ```
 layers/
-├── .layers/                   # Layers固有コンテンツ統合ディレクトリ
-│   ├── src/                   # TypeScriptソースコード
-│   │   ├── index.ts           # CLIエントリーポイント
-│   │   ├── agents/            # エージェント管理
+├── .layers/                   # Layers content directory
+│   ├── src/                   # TypeScript source code
+│   │   ├── index.ts           # CLI entry point
+│   │   ├── agents/            # Agent management
 │   │   │   ├── AgentManager.ts
-│   │   │   ├── types.ts
+│   │   │   ├── AgentCliController.ts  # agent-cli process management
+│   │   │   ├── types.ts       # Includes BackendType
 │   │   │   └── index.ts
-│   │   ├── communication/     # メッセージング
+│   │   ├── communication/     # Messaging
 │   │   │   ├── MessageBroker.ts
 │   │   │   ├── TmuxTransport.ts
+│   │   │   ├── AgentCliTransport.ts    # agent-cli IPC transport
 │   │   │   ├── types.ts
 │   │   │   └── index.ts
-│   │   ├── tmux/              # tmux操作
+│   │   ├── tmux/              # tmux operations
 │   │   │   ├── TmuxController.ts
 │   │   │   ├── ShellExecutor.ts
 │   │   │   ├── types.ts
 │   │   │   └── index.ts
-│   │   ├── monitoring/        # 監視・ログ
+│   │   ├── monitoring/        # Monitoring & logging
 │   │   │   ├── Monitor.ts
+│   │   │   ├── LiveView.ts
 │   │   │   ├── Logger.ts
 │   │   │   └── index.ts
 │   │   └── config/
-│   │       └── agents.json    # エージェント設定
-│   ├── dist/                  # ビルド成果物（自動生成）
-│   ├── prompts/               # エージェントプロンプト
+│   │       └── agents.json    # Agent configuration
+│   ├── dist/                  # Build output (auto-generated)
+│   ├── prompts/               # Claude CLI prompt files
 │   │   ├── producer.md
 │   │   ├── director.md
 │   │   ├── lead_design.md
@@ -320,20 +470,36 @@ layers/
 │   │   ├── lead_qa.md
 │   │   ├── designer.md
 │   │   ├── programmer.md
-│   │   └── tester.md
-│   └── logs/                  # エージェント作業ログ（自動生成）
-├── logs/                      # システムログファイル
+│   │   ├── tester.md
+│   │   └── *_ja.md           # Japanese versions
+│   ├── personas/              # agent-cli persona files
+│   │   ├── producer.md
+│   │   ├── director.md
+│   │   ├── lead_design.md
+│   │   ├── lead_prog.md
+│   │   ├── lead_qa.md
+│   │   ├── designer.md
+│   │   ├── programmer.md
+│   │   ├── tester.md
+│   │   └── *_ja.md           # Japanese versions
+│   ├── logs/                  # Agent work logs (auto-generated)
+│   ├── registry/              # agent-cli IPC registry (auto-generated)
+│   └── agent-cli.toml         # agent-cli configuration (auto-generated)
+├── logs/                      # System log files
 ├── package.json
 ├── tsconfig.json
 ├── pnpm-lock.yaml
-└── README.md
+├── install.sh                 # Setup script
+├── layers                     # Convenience command script
+├── README.md
+└── README_ja.md
 ```
 
-## 設定ファイル
+## Configuration Files
 
 ### agents.json
 
-各エージェントの設定は `.layers/src/config/agents.json` で管理されます。
+Each agent's configuration is managed in `.layers/src/config/agents.json`.
 
 ```json
 {
@@ -342,83 +508,132 @@ layers/
   "superior": null,
   "subordinates": ["director"],
   "promptFile": ".layers/prompts/producer.md",
-  "permissionMode": "dangerouslySkip"
+  "permissionMode": "dangerouslySkip",
+  "backend": "agent-cli",
+  "provider": "claude",
+  "model": "claude-opus-4-7"
 }
 ```
 
-### エージェントプロンプト
+### agent-cli.toml
 
-各エージェントの行動指針は `.layers/prompts/` 配下のMarkdownファイルで定義されています。
+Shared configuration for all agent-cli instances. Auto-generated on first start.
 
-## トラブルシューティング
+```toml
+[provider]
+kind = "claude"
 
-### セッションが起動しない
+[provider.claude]
+api_key_env = "ANTHROPIC_API_KEY"
+
+[runtime]
+registry_dir = ".layers/registry"
+agents_dir = ".layers/personas"
+auto_approve_tools = true
+
+[tools]
+enabled = ["shell", "fs_read", "fs_write", "send_to"]
+```
+
+### Agent prompts (Claude CLI backend)
+
+Agent behavioral guidelines are defined in `.layers/prompts/*.md` Markdown files.
+
+### Agent personas (agent-cli backend)
+
+Agent behavioral guidelines are defined in `.layers/personas/*.md` using YAML frontmatter + Markdown body format. Persona files use `send_to` for inter-agent communication instead of `tmux send-keys`.
+
+## Troubleshooting
+
+### Sessions won't start (Claude CLI backend)
 
 ```bash
-# tmuxの確認
+# Check tmux
 tmux -V
 
-# Claude Codeの確認
+# Check Claude Code
 claude --version
 
-# pnpmの確認
+# Check pnpm
 pnpm --version
 ```
 
-### メッセージが届かない
+### Processes won't start (agent-cli backend)
 
 ```bash
-# セッションの確認
+# Check agent-cli
+agent-cli --version
+
+# List running peers
+agent-cli list
+
+# Check configuration
+agent-cli doctor
+```
+
+### Messages not delivered (Claude CLI backend)
+
+```bash
+# Check sessions
 tmux ls
 
-# 特定セッションの内容確認
+# Check specific session content
 tmux capture-pane -t producer -p
 ```
 
-### エージェントが応答しない
+### Messages not delivered (agent-cli backend)
 
 ```bash
-# セッションの再起動
-tmux kill-session -t <session_name>
-pnpm run start
+# List registered agents
+agent-cli list
+
+# Check agent status
+agent-cli doctor
 ```
 
-### ビルドエラー
+### Agent not responding
 
 ```bash
-# node_modulesを再インストール
+# Claude CLI: Restart sessions
+tmux kill-session -t <session_name>
+pnpm run start
+
+# agent-cli: Restart processes
+pnpm run stop -- --backend agent-cli
+pnpm run start -- --backend agent-cli
+```
+
+### Build errors
+
+```bash
+# Reinstall node_modules
 rm -rf node_modules
 pnpm install
 
-# ビルド
+# Build
 pnpm run build
 ```
 
-## 技術的な制約
+## Technical Notes
 
-### Claude Codeのbash実行制約
+### Claude Code bash execution constraints
 
-Claude Codeがbashコマンドを実行する際、`;`や`&&`で連結された複数コマンドの後半が実行されない場合があります。
+When Claude Code executes bash commands, the latter half of multi-command sequences joined with `;` or `&&` may not execute.
 
-**対策**: エージェントプロンプトでは、メッセージ送信とEnter送信を別々のbashコマンドブロックとして実行するよう指示しています。
+**Workaround**: Agent prompts instruct sending messages and Enter as separate bash command blocks.
 
-```bash
-# コマンド1: メッセージ送信
-tmux send-keys -t "target" 'メッセージ'
-```
+### agent-cli communication model
 
-```bash
-# コマンド2: Enter送信（必ず別のbash実行で）
-tmux send-keys -t "target" Enter
-```
+agent-cli uses Unix-domain socket IPC for inter-agent messaging via the `send_to` tool. Persona files instruct agents to use `send_to` for all inter-agent communication, replacing the `tmux send-keys` approach used in Claude CLI mode.
 
-## 注意事項
+### Context limits
 
-- 14エージェント同時稼働は大量のAPI呼び出しを発生させます
-- 必要なエージェントのみを稼働させることを推奨します
-- `--dangerously-skip-permissions`の使用は本番環境では非推奨です
-- Anthropic APIには5時間あたりの利用制限があります
+- 14 simultaneous agents generate significant API calls
+- Consider running only needed agents
+- `--dangerously-skip-permissions` is not recommended for production (Claude CLI)
+- `auto_approve_tools = true` should be used cautiously in production (agent-cli)
+- Anthropic API has 5-hour usage limits
 
-## ライセンス
+## License
 
 MIT
