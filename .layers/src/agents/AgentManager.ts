@@ -118,7 +118,7 @@ export class AgentManager {
       throw new Error(`Agent not found: ${sessionName}`);
     }
 
-    const agentBackend = agent.backend || this._backend;
+    const agentBackend = this._backend || agent.backend || 'claude';
 
     if (agentBackend === 'agent-cli') {
       await this.agentCli.startAgent(agent, this.projectRoot);
@@ -156,7 +156,7 @@ export class AgentManager {
       return;
     }
 
-    const agentBackend = agent.backend || this._backend;
+    const agentBackend = this._backend || agent.backend || 'claude';
 
     if (agentBackend === 'agent-cli') {
       await this.agentCli.stopAgent(sessionName);
@@ -172,7 +172,7 @@ export class AgentManager {
     const statuses: AgentStatus[] = [];
 
     for (const agent of this.agents) {
-      const agentBackend = agent.backend || this._backend;
+      const agentBackend = this._backend || agent.backend || 'claude';
       let isRunning: boolean;
 
       if (agentBackend === 'agent-cli') {
@@ -216,7 +216,7 @@ export class AgentManager {
       throw new Error(`Agent not found: ${sessionName}`);
     }
 
-    const agentBackend = agent.backend || this._backend;
+    const agentBackend = this._backend || agent.backend || 'claude';
 
     for (let i = 0; i < maxRetries; i++) {
       try {
