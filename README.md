@@ -114,7 +114,7 @@ See the [agent-cli documentation](https://github.com/aquaxis/agent-cli) for more
 
 ### One-liner install (recommended)
 
-This clones the repository and sets up everything automatically:
+This clones the repository into the current directory and sets up everything automatically:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/aquaxis/layers/main/install.sh | sh

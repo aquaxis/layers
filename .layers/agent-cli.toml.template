@@ -4,16 +4,15 @@
 # For more details, see: https://github.com/aquaxis/agent-cli
 
 [provider]
-kind = "claude"
+kind = "ollama"
 
 [provider.claude]
 api_key_env = "ANTHROPIC_API_KEY"
 model = "claude-sonnet-4-5"
 
-# Uncomment to use Ollama backend
-# [provider.ollama]
-# model = "glm-5.1:cloud"
-# base_url = "http://127.0.0.1:11434"
+[provider.ollama]
+model = "glm-5.1:cloud"
+base_url = "http://127.0.0.1:11434"
 
 [runtime]
 auto_approve_tools = true

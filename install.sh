@@ -122,7 +122,6 @@ is_layers_repo() {
 
 # サブディレクトリにLayersをクローンまたは更新する関数
 clone_to_subdir() {
-  INSTALL_DIR="$INSTALL_DIR/.layers"
   info "Layersを $INSTALL_DIR にクローンします..."
   if [ -d "$INSTALL_DIR/.git" ] && is_layers_repo "$INSTALL_DIR"; then
     # サブディレクトリに既にLayersリポジトリがある場合は更新

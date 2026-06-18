@@ -44,6 +44,24 @@ const agentManager = new AgentManager(undefined, undefined, agentCliController);
 const messageBroker = new MessageBroker();
 const monitor = new Monitor(undefined, undefined, agentCliController);
 
+// Global SIGINT/SIGTERM handler — stops all agents gracefully
+let shutdownRegistered = false;
+function registerShutdown() {
+  if (shutdownRegistered) return;
+  shutdownRegistered = true;
+  const shutdown = async () => {
+    console.log('\n\nStopping all agents...');
+    try {
+      await agentManager.stopAll();
+    } catch (e) {
+      console.error('Error during shutdown:', e);
+    }
+    process.exit(130);
+  };
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
+}
+
 async function start(args: string[]): Promise<void> {
   const parsed = parseArgs(args);
   const backend: BackendType =
@@ -81,6 +99,9 @@ async function start(args: string[]): Promise<void> {
     console.log('\nTo connect to an agent:');
     console.log('  tmux attach -t producer');
   }
+
+  // Handle Ctrl-C / SIGINT gracefully
+  registerShutdown();
 }
 
 async function stop(args: string[]): Promise<void> {
@@ -211,7 +232,7 @@ async function monitorMode(args: string[]): Promise<void> {
   // Start watching
   monitor.startWatching(5000, backend);
 
-  // Handle exit
+  // Handle Ctrl-C / SIGINT gracefully
   process.on('SIGINT', () => {
     console.log('\n\nStopping monitor...');
     monitor.stopWatching();
@@ -241,6 +262,13 @@ async function liveMode(args: string[]): Promise<void> {
 
   const liveView = new LiveView(agentManager, monitor, { interval }, agentCliController, backend);
   liveView.start();
+
+  // Handle Ctrl-C / SIGINT gracefully
+  process.on('SIGINT', () => {
+    console.log('\n\nStopping live view...');
+    liveView.stop();
+    process.exit(0);
+  });
 
   // Keep running
   await new Promise(() => {});
