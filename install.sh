@@ -58,6 +58,21 @@ fi
 if [ "$EXEC_MODE" = "local" ]; then
   warn "既存のLayersプロジェクトディレクトリで実行されています: $PROJECT_DIR"
   info "上書きインストール（アップデート）モードで続行します。"
+
+  # Git pull to update source code
+  cd "$PROJECT_DIR" || { error "ディレクトリに移動できません: $PROJECT_DIR"; exit 1; }
+  if [ -d "$PROJECT_DIR/.git" ]; then
+    info "ローカル変更をリセットしています..."
+    git checkout . 2>/dev/null || true
+    git clean -fd 2>/dev/null || true
+    info "リポジトリを更新しています（git pull）..."
+    git pull || {
+      warn "git pull に失敗しました。既存のコードをそのまま使用します。"
+    }
+    success "リポジトリの更新が完了しました"
+  else
+    warn ".gitディレクトリが見つかりません。ソースコードの更新をスキップします。"
+  fi
   echo ""
 else
   info "実行モード: リモート（リポジトリをクローンします）"

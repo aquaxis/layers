@@ -51,7 +51,7 @@ export class AgentCliController implements IAgentCliController {
 
     const child = spawn('agent-cli', args, {
       cwd: projectRoot,
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: ['pipe', 'pipe', 'pipe'],
       detached: false,
     });
 
