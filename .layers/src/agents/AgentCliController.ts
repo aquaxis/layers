@@ -29,8 +29,12 @@ export class AgentCliController implements IAgentCliController {
 
     const personaPath = join(projectRoot, config.personaFile || `.layers/personas/${config.role}.md`);
 
-    const args: string[] = ['run'];
+    // Resolve config path: explicit configPath > project-local .layers/agent-cli.toml
+    const resolvedConfigPath = this.configPath || join(projectRoot, '.layers', 'agent-cli.toml');
 
+    const args: string[] = ['run', '--config', resolvedConfigPath];
+
+    // Only pass --provider when explicitly set per-agent (overrides config file)
     if (config.provider) {
       args.push('--provider', config.provider);
     }
@@ -42,10 +46,6 @@ export class AgentCliController implements IAgentCliController {
     args.push('--name', config.sessionName);
     args.push('--persona', personaPath);
     args.push('--auto-approve-tools');
-
-    if (this.configPath) {
-      args.unshift('--config', this.configPath);
-    }
 
     await this.logger.info('AgentCliController', `Starting agent-cli: agent-cli ${args.join(' ')}`);
 
@@ -176,9 +176,15 @@ export class AgentCliController implements IAgentCliController {
     return this.processes.get(sessionName);
   }
 
-  getRunningAgentNames(): string[] {
-    return Array.from(this.processes.keys());
+  setConfigPath(configPath: string): void {
+    this.configPath = configPath;
   }
+  getRunningAgentNames(): string[] {
+
+    return Array.from(this.processes.keys());
+
+  }
+
 
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));

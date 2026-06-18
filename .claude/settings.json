@@ -38,7 +38,7 @@
       "WebFetch(domain:github.com)",
       "Bash(gh release create:*)"
     ],
-    "defaultMode": "acceptEdits"
+    "defaultMode": "bypassPermissions"
   },
   "statusLine": {
     "type": "command",

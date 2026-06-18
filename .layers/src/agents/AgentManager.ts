@@ -1,5 +1,5 @@
 import { readFile } from 'fs/promises';
-import { mkdirSync, existsSync } from 'fs';
+import { mkdirSync, existsSync, copyFileSync } from 'fs';
 import { join } from 'path';
 import { TmuxController } from '../tmux/TmuxController.js';
 import { Logger } from '../monitoring/Logger.js';
@@ -26,6 +26,10 @@ export class AgentManager {
   ) {
     this.projectRoot = projectRoot || process.cwd();
     this._backend = backend;
+
+    // Ensure AgentCliController has the project-local config path
+    const configPath = join(this.projectRoot, '.layers', 'agent-cli.toml');
+    this.agentCli.setConfigPath(configPath);
   }
 
   /** Set the backend type for agent management */
@@ -44,6 +48,25 @@ export class AgentManager {
     const config: AgentsConfig = JSON.parse(content);
     this.agents = config.agents;
     await this.logger.info('AgentManager', `Loaded ${this.agents.length} agents from config (backend: ${this._backend})`);
+  }
+
+  /** Ensure .layers/agent-cli.toml exists, generate from template if missing */
+  private ensureAgentCliConfig(): void {
+    const configPath = join(this.projectRoot, '.layers', 'agent-cli.toml');
+    const templatePath = join(this.projectRoot, '.layers', 'agent-cli.toml.template');
+
+    if (!existsSync(configPath)) {
+      if (existsSync(templatePath)) {
+        try {
+          copyFileSync(templatePath, configPath);
+          void this.logger.info('AgentManager', `Generated .layers/agent-cli.toml from template`);
+        } catch (error) {
+          void this.logger.error('AgentManager', `Failed to generate .layers/agent-cli.toml: ${String(error)}`);
+        }
+      } else {
+        void this.logger.warn('AgentManager', `No .layers/agent-cli.toml or template found — agent-cli will use global config`);
+      }
+    }
   }
 
   async startAll(): Promise<void> {
@@ -71,6 +94,9 @@ export class AgentManager {
       } catch (error) {
         await this.logger.error('AgentManager', `Failed to create registry directory: ${registryDir}`, { error: String(error) });
       }
+
+      // Ensure .layers/agent-cli.toml exists (generate from template if missing)
+      this.ensureAgentCliConfig();
     }
 
     // Start in order: producer -> director -> leads -> members

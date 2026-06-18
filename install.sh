@@ -8,8 +8,8 @@ set -e
 # 使用方法:
 #   curl -fsSL https://raw.githubusercontent.com/aquaxis/layers/main/install.sh | sh
 #
-# 注意: プロジェクトディレクトリ内でのローカル実行は禁止されています。
-#       必ず上記のcurlパイプ実行を使用してください。
+#   既存プロジェクトディレクトリ内で実行する場合（上書きインストール）:
+#     bash install.sh
 # =============================================================================
 
 # 設定
@@ -56,12 +56,9 @@ else
 fi
 
 if [ "$EXEC_MODE" = "local" ]; then
-  error "install.sh はプロジェクトディレクトリ内では実行できません。"
+  warn "既存のLayersプロジェクトディレクトリで実行されています: $PROJECT_DIR"
+  info "上書きインストール（アップデート）モードで続行します。"
   echo ""
-  echo "  リモートからパイプ実行してください:"
-  echo "    curl -fsSL https://raw.githubusercontent.com/aquaxis/layers/main/install.sh | sh"
-  echo ""
-  exit 1
 else
   info "実行モード: リモート（リポジトリをクローンします）"
 fi
@@ -179,7 +176,7 @@ if [ "$EXEC_MODE" = "pipe" ]; then
     success "クローン完了: $INSTALL_DIR"
   else
     # 非空ディレクトリだがGitリポジトリでない場合はサブディレクトリにクローン
-    warn "カレントディレクトリは空ではありません。既存ファイルを保護します。"
+    warn "カレン���ディレクトリは空ではありません。既存ファイルを保護します。"
     clone_to_subdir
   fi
 
@@ -327,7 +324,29 @@ pnpm run build
 success "pnpm run build 完了"
 
 # -------------------------------------------------------------------------
-# 9. layers コマンドの作成
+# 9. agent-cli 設定ファイルの生成
+# -------------------------------------------------------------------------
+generate_agent_cli_config() {
+  local config_file="$PROJECT_DIR/.layers/agent-cli.toml"
+  local template_file="$PROJECT_DIR/.layers/agent-cli.toml.template"
+
+  if [ -f "$config_file" ]; then
+    info "agent-cli設定ファイルが既に存在します: $config_file"
+    info "ユーザーカスタマイズを保持するため、上書きしません。"
+  elif [ -f "$template_file" ]; then
+    info "agent-cli設定ファイルをテンプレートから生成しています: $config_file"
+    cp "$template_file" "$config_file"
+    success "agent-cli設定ファイルを生成しました: $config_file"
+  else
+    warn "agent-cli設定テンプレートが見つかりません: $template_file"
+    warn "agent-cli設定ファイルは生成されませんでした。"
+  fi
+}
+
+generate_agent_cli_config
+
+# -------------------------------------------------------------------------
+# 10. layers コマンドの作成
 # -------------------------------------------------------------------------
 create_layers_command() {
   local layers_cmd="$PROJECT_DIR/layers"
@@ -395,7 +414,7 @@ LAYERS_CMD_EOF
 create_layers_command
 
 # -------------------------------------------------------------------------
-# 10. 動作確認チェック
+# 11. 動作確認チェック
 # -------------------------------------------------------------------------
 echo ""
 echo "============================================="
@@ -433,7 +452,7 @@ else
 fi
 
 # -------------------------------------------------------------------------
-# 11. Claude Code CLI / agent-cli の案内
+# 12. Claude Code CLI / agent-cli の案内
 # -------------------------------------------------------------------------
 echo ""
 echo "=== エージェントバックエンド ==="
@@ -476,7 +495,7 @@ else
 fi
 
 # -------------------------------------------------------------------------
-# 12. 完了メッセージ
+# 13. 完了メッセージ
 # -------------------------------------------------------------------------
 echo ""
 echo "============================================="

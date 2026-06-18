@@ -1,5 +1,6 @@
 import { AgentManager } from './agents/AgentManager.js';
 import { AgentCliController } from './agents/AgentCliController.js';
+import { join } from 'path';
 import { MessageBroker } from './communication/MessageBroker.js';
 import { Monitor } from './monitoring/Monitor.js';
 import { LiveView } from './monitoring/LiveView.js';
@@ -27,7 +28,7 @@ async function init(backend: BackendType): Promise<void> {
   const logger = new Logger();
   await logger.init();
 
-  const agentCli = new AgentCliController();
+  const agentCli = new AgentCliController(join(process.cwd(), '.layers', 'agent-cli.toml'));
   const monitor = new Monitor(undefined, undefined, agentCli);
   const agentManager = new AgentManager(undefined, undefined, agentCli, undefined, backend);
 
@@ -38,7 +39,7 @@ async function init(backend: BackendType): Promise<void> {
 
 // Global instances
 const logger = new Logger();
-const agentCliController = new AgentCliController();
+const agentCliController = new AgentCliController(join(process.cwd(), '.layers', 'agent-cli.toml'));
 const agentManager = new AgentManager(undefined, undefined, agentCliController);
 const messageBroker = new MessageBroker();
 const monitor = new Monitor(undefined, undefined, agentCliController);

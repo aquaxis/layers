@@ -8,8 +8,6 @@
       "promptFile": ".layers/prompts/producer.md",
       "permissionMode": "dangerouslySkip",
       "personaFile": ".layers/personas/producer.md",
-      "provider": "claude",
-      "model": "claude-opus-4-7",
       "autoApproveTools": true
     },
     {
@@ -20,8 +18,6 @@
       "promptFile": ".layers/prompts/director.md",
       "permissionMode": "dangerouslySkip",
       "personaFile": ".layers/personas/director.md",
-      "provider": "claude",
-      "model": "claude-opus-4-7",
       "autoApproveTools": true
     },
     {
@@ -32,8 +28,6 @@
       "promptFile": ".layers/prompts/lead_design.md",
       "permissionMode": "dangerouslySkip",
       "personaFile": ".layers/personas/lead_design.md",
-      "provider": "claude",
-      "model": "claude-opus-4-7",
       "autoApproveTools": true
     },
     {
@@ -44,8 +38,6 @@
       "promptFile": ".layers/prompts/lead_prog.md",
       "permissionMode": "dangerouslySkip",
       "personaFile": ".layers/personas/lead_prog.md",
-      "provider": "claude",
-      "model": "claude-opus-4-7",
       "autoApproveTools": true
     },
     {
@@ -56,8 +48,6 @@
       "promptFile": ".layers/prompts/lead_qa.md",
       "permissionMode": "dangerouslySkip",
       "personaFile": ".layers/personas/lead_qa.md",
-      "provider": "claude",
-      "model": "claude-opus-4-7",
       "autoApproveTools": true
     },
     {
@@ -68,8 +58,6 @@
       "promptFile": ".layers/prompts/designer.md",
       "permissionMode": "dangerouslySkip",
       "personaFile": ".layers/personas/designer.md",
-      "provider": "claude",
-      "model": "claude-opus-4-7",
       "autoApproveTools": true
     },
     {
@@ -80,8 +68,6 @@
       "promptFile": ".layers/prompts/designer.md",
       "permissionMode": "dangerouslySkip",
       "personaFile": ".layers/personas/designer.md",
-      "provider": "claude",
-      "model": "claude-opus-4-7",
       "autoApproveTools": true
     },
     {
@@ -92,8 +78,6 @@
       "promptFile": ".layers/prompts/programmer.md",
       "permissionMode": "dangerouslySkip",
       "personaFile": ".layers/personas/programmer.md",
-      "provider": "claude",
-      "model": "claude-opus-4-7",
       "autoApproveTools": true
     },
     {
@@ -104,8 +88,6 @@
       "promptFile": ".layers/prompts/programmer.md",
       "permissionMode": "dangerouslySkip",
       "personaFile": ".layers/personas/programmer.md",
-      "provider": "claude",
-      "model": "claude-opus-4-7",
       "autoApproveTools": true
     },
     {
@@ -116,8 +98,6 @@
       "promptFile": ".layers/prompts/programmer.md",
       "permissionMode": "dangerouslySkip",
       "personaFile": ".layers/personas/programmer.md",
-      "provider": "claude",
-      "model": "claude-opus-4-7",
       "autoApproveTools": true
     },
     {
@@ -128,8 +108,6 @@
       "promptFile": ".layers/prompts/programmer.md",
       "permissionMode": "dangerouslySkip",
       "personaFile": ".layers/personas/programmer.md",
-      "provider": "claude",
-      "model": "claude-opus-4-7",
       "autoApproveTools": true
     },
     {
@@ -140,8 +118,6 @@
       "promptFile": ".layers/prompts/programmer.md",
       "permissionMode": "dangerouslySkip",
       "personaFile": ".layers/personas/programmer.md",
-      "provider": "claude",
-      "model": "claude-opus-4-7",
       "autoApproveTools": true
     },
     {
@@ -152,8 +128,6 @@
       "promptFile": ".layers/prompts/tester.md",
       "permissionMode": "dangerouslySkip",
       "personaFile": ".layers/personas/tester.md",
-      "provider": "claude",
-      "model": "claude-opus-4-7",
       "autoApproveTools": true
     },
     {
@@ -164,8 +138,6 @@
       "promptFile": ".layers/prompts/tester.md",
       "permissionMode": "dangerouslySkip",
       "personaFile": ".layers/personas/tester.md",
-      "provider": "claude",
-      "model": "claude-opus-4-7",
       "autoApproveTools": true
     }
   ]
