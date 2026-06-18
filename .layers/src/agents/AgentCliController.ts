@@ -47,12 +47,21 @@ export class AgentCliController implements IAgentCliController {
     args.push('--persona', personaPath);
     args.push('--auto-approve-tools');
 
-    await this.logger.info('AgentCliController', `Starting agent-cli: agent-cli ${args.join(' ')}`);
+    const agentCliCmd = `agent-cli ${args.join(' ')}`;
+    await this.logger.info('AgentCliController', `Starting agent-cli (PTY): ${agentCliCmd}`);
 
-    const child = spawn('agent-cli', args, {
+    // Use the `script` command to allocate a pseudo-terminal (PTY) for agent-cli.
+    // agent-cli's REPL checks isatty(stdin) and exits immediately when stdin is
+    // not a TTY. Wrapping with `script -qec "<cmd>" /dev/null` provides a proper
+    // PTY so the REPL stays alive in interactive mode.
+    //
+    // We use detached: true so the child is the leader of its own process group.
+    // This allows us to kill the entire process group (script + agent-cli) on
+    // shutdown, preventing orphaned agent-cli processes.
+    const child = spawn('script', ['-qec', agentCliCmd, '/dev/null'], {
       cwd: projectRoot,
       stdio: ['pipe', 'pipe', 'pipe'],
-      detached: false,
+      detached: true,
     });
 
     child.on('error', async (error) => {
@@ -72,7 +81,6 @@ export class AgentCliController implements IAgentCliController {
     child.stdout?.on('data', (data: Buffer) => {
       const output = data.toString().trim();
       if (output) {
-        // Log significant output at debug level to avoid flooding
         void this.logger.debug('AgentCliController', `[${config.sessionName}] ${output}`);
       }
     });
@@ -99,8 +107,15 @@ export class AgentCliController implements IAgentCliController {
       return;
     }
 
-    // Send SIGTERM for graceful shutdown
-    child.kill('SIGTERM');
+    // Kill the entire process group (negative PID) to ensure both `script`
+    // and its child `agent-cli` process are terminated.
+    // With detached: true, child.pid is the process group leader PID.
+    try {
+      process.kill(-child.pid!, 'SIGTERM');
+    } catch {
+      // Process group kill might fail if the process already exited
+      try { child.kill('SIGTERM'); } catch { /* already dead */ }
+    }
 
     // Wait up to 5 seconds for graceful shutdown
     let waited = 0;
@@ -109,9 +124,13 @@ export class AgentCliController implements IAgentCliController {
       waited += 100;
     }
 
-    // Force kill if still running
+    // Force kill the process group if still running
     if (this.processes.has(sessionName)) {
-      child.kill('SIGKILL');
+      try {
+        process.kill(-child.pid!, 'SIGKILL');
+      } catch {
+        try { child.kill('SIGKILL'); } catch { /* already dead */ }
+      }
       this.processes.delete(sessionName);
     }
 
@@ -119,12 +138,10 @@ export class AgentCliController implements IAgentCliController {
   }
 
   async isRunning(sessionName: string): Promise<boolean> {
-    // Check our process map first
     if (this.processes.has(sessionName)) {
       const child = this.processes.get(sessionName)!;
-      // Check if the process is still alive
       try {
-        process.kill(child.pid!, 0); // Signal 0 doesn't kill, just checks existence
+        process.kill(child.pid!, 0);
         return true;
       } catch {
         this.processes.delete(sessionName);
@@ -132,7 +149,6 @@ export class AgentCliController implements IAgentCliController {
       }
     }
 
-    // Also check via agent-cli list command
     const agents = await this.listAgents();
     return agents.includes(sessionName);
   }
@@ -141,33 +157,41 @@ export class AgentCliController implements IAgentCliController {
     try {
       const { ShellExecutor } = await import('../tmux/ShellExecutor.js');
       const shell = new ShellExecutor();
-      const { stdout } = await shell.execute('agent-cli list 2>/dev/null');
 
-      if (!stdout.trim()) {
+      // Pass --config so agent-cli reads the correct registry directory
+      const configFlag = this.configPath ? `--config "${this.configPath}"` : '';
+      const { stdout } = await shell.execute(`agent-cli ${configFlag} list 2>/dev/null`);
+
+      if (!stdout.trim() || stdout.includes('no agents running')) {
         return [];
       }
 
       // Parse agent-cli list output
-      // Output format: lines with agent names/IDs
+      // Output format:
+      //   ID  NAME  PROVIDER  MODEL  ROLE  SKILLS
+      //   agent-XXXX  producer  ollama  glm-5.1:cloud  Producer — ...  ...
       const lines = stdout.trim().split('\n');
       const agentNames: string[] = [];
 
       for (const line of lines) {
-        // Skip header lines and empty lines
         const trimmed = line.trim();
+        // Skip header lines and separator lines
         if (!trimmed || trimmed.startsWith('ID') || trimmed.startsWith('Name') || trimmed.startsWith('-')) {
           continue;
         }
-        // Extract the name/id field (first column)
+        // Split by whitespace — columns: ID, NAME, PROVIDER, MODEL, ROLE, SKILLS
         const parts = trimmed.split(/\s+/);
-        if (parts.length >= 1) {
-          agentNames.push(parts[0]);
+        if (parts.length >= 2) {
+          // NAME is the second column (index 1)
+          const name = parts[1];
+          if (name && name !== '-') {
+            agentNames.push(name);
+          }
         }
       }
 
       return agentNames;
     } catch {
-      // agent-cli might not be installed or no agents running
       return [];
     }
   }
@@ -179,12 +203,10 @@ export class AgentCliController implements IAgentCliController {
   setConfigPath(configPath: string): void {
     this.configPath = configPath;
   }
+
   getRunningAgentNames(): string[] {
-
     return Array.from(this.processes.keys());
-
   }
-
 
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));

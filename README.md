@@ -492,7 +492,7 @@ layers/
 ├── install.sh                 # Setup script
 ├── layers                     # Convenience command script
 ├── README.md
-└── README_ja.md
+└── README_js.md
 ```
 
 ## Configuration Files
