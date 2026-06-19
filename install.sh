@@ -24,10 +24,10 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # メッセージ関数
-info()    { echo -e "${BLUE}[INFO]${NC} $1"; }
-success() { echo -e "${GREEN}[OK]${NC} $1"; }
-warn()    { echo -e "${YELLOW}[WARN]${NC} $1"; }
-error()   { echo -e "${RED}[ERROR]${NC} $1"; }
+info()    { printf "${BLUE}[INFO]${NC} %s\n" "$1"; }
+success() { printf "${GREEN}[OK]${NC} %s\n" "$1"; }
+warn()    { printf "${YELLOW}[WARN]${NC} %s\n" "$1"; }
+error()   { printf "${RED}[ERROR]${NC} %s\n" "$1"; }
 
 echo ""
 echo "============================================="
@@ -101,7 +101,7 @@ detect_os
 # 3. Git確認
 # -------------------------------------------------------------------------
 info "Git の確認..."
-if command -v git &> /dev/null; then
+if command -v git >/dev/null 2>&1; then
   success "Git: $(git --version)"
 else
   error "Git がインストールされていません。"
@@ -163,9 +163,7 @@ clone_to_subdir() {
     info "ファイルを $INSTALL_DIR にコピーしています（既存ファイルは保持）..."
     # .gitはコピーしない（インストール完了後に.gitを削除する方針のため）
     rm -rf "$tmp_dir/.git"
-    shopt -s dotglob
-    cp -rn "$tmp_dir"/* "$INSTALL_DIR/" 2>/dev/null || true
-    shopt -u dotglob
+    find "$tmp_dir" -mindepth 1 -maxdepth 1 -exec cp -rn {} "$INSTALL_DIR/" \; 2>/dev/null || true
     rm -rf "$tmp_dir"
     success "インストール完了: $INSTALL_DIR"
   fi
@@ -219,7 +217,7 @@ install_node() {
     . "$NVM_DIR/nvm.sh"
   fi
 
-  if command -v node &> /dev/null; then
+  if command -v node >/dev/null 2>&1; then
     NODE_VERSION=$(node -v)
     NODE_MAJOR=$(echo "$NODE_VERSION" | sed 's/v\([0-9]*\).*/\1/')
     if [ "$NODE_MAJOR" -ge 20 ]; then
@@ -233,7 +231,7 @@ install_node() {
   fi
 
   # nvm のインストール（未インストールの場合）
-  if ! command -v nvm &> /dev/null; then
+  if ! command -v nvm >/dev/null 2>&1; then
     info "nvm をインストールしています..."
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
 
@@ -241,7 +239,7 @@ install_node() {
     export NVM_DIR="${HOME}/.nvm"
     . "$NVM_DIR/nvm.sh"
 
-    if ! command -v nvm &> /dev/null; then
+    if ! command -v nvm >/dev/null 2>&1; then
       error "nvm のインストールに失敗しました。"
       exit 1
     fi
@@ -263,7 +261,7 @@ install_node
 install_pnpm() {
   info "pnpm の確認..."
 
-  if command -v pnpm &> /dev/null; then
+  if command -v pnpm >/dev/null 2>&1; then
     success "pnpm: $(pnpm -v)"
     return
   fi
@@ -271,7 +269,7 @@ install_pnpm() {
   info "pnpm をインストールしています..."
   npm install -g pnpm
 
-  if command -v pnpm &> /dev/null; then
+  if command -v pnpm >/dev/null 2>&1; then
     success "pnpm: $(pnpm -v)"
   else
     error "pnpm のインストールに失敗しました。"
@@ -287,7 +285,7 @@ install_pnpm
 install_tmux() {
   info "tmux の確認..."
 
-  if command -v tmux &> /dev/null; then
+  if command -v tmux >/dev/null 2>&1; then
     success "tmux: $(tmux -V)"
     return
   fi
@@ -295,14 +293,14 @@ install_tmux() {
   info "tmux をインストールしています..."
 
   if [ "$OS" = "linux" ]; then
-    if command -v apt-get &> /dev/null; then
+    if command -v apt-get >/dev/null 2>&1; then
       sudo apt-get update && sudo apt-get install -y tmux
     else
       error "apt-get が見つかりません。手動で tmux をインストールしてください。"
       exit 1
     fi
   elif [ "$OS" = "macos" ]; then
-    if command -v brew &> /dev/null; then
+    if command -v brew >/dev/null 2>&1; then
       brew install tmux
     else
       error "Homebrew がインストールされていません。"
@@ -313,7 +311,7 @@ install_tmux() {
     fi
   fi
 
-  if command -v tmux &> /dev/null; then
+  if command -v tmux >/dev/null 2>&1; then
     success "tmux: $(tmux -V)"
   else
     error "tmux のインストールに失敗しました。"
@@ -448,21 +446,21 @@ echo ""
 
 CHECK_PASSED=true
 
-if command -v node &> /dev/null; then
+if command -v node >/dev/null 2>&1; then
   success "node: $(node -v)"
 else
   error "node が見つかりません"
   CHECK_PASSED=false
 fi
 
-if command -v pnpm &> /dev/null; then
+if command -v pnpm >/dev/null 2>&1; then
   success "pnpm: $(pnpm -v)"
 else
   error "pnpm が見つかりません"
   CHECK_PASSED=false
 fi
 
-if command -v tmux &> /dev/null; then
+if command -v tmux >/dev/null 2>&1; then
   success "tmux: $(tmux -V)"
 else
   warn "tmux が見つかりません（agent-cliバックエンド使用時は不要です）"
@@ -487,7 +485,7 @@ echo "  1. tmux + Claude Code CLI (デフォルト)"
 echo "     従来のtmuxベースのマルチエージェントシステム"
 echo ""
 
-if command -v claude &> /dev/null; then
+if command -v claude >/dev/null 2>&1; then
   success "Claude Code CLI: インストール済み"
 else
   warn "Claude Code CLI がインストールされていません。"
@@ -506,7 +504,7 @@ echo "  2. agent-cli (代替バックエンド)"
 echo "     tmux不要のスタンドアロンバックエンド。UnixドメインソケットによるIPC通信"
 echo ""
 
-if command -v agent-cli &> /dev/null; then
+if command -v agent-cli >/dev/null 2>&1; then
   success "agent-cli: インストール済み ($(agent-cli --version 2>/dev/null || echo 'version unknown'))"
 else
   echo "  agent-cliはインストールされていません（オプション）"
