@@ -135,29 +135,39 @@ is_layers_repo() {
   esac
 }
 
-# サブディレクトリにLayersをクローンまたは更新する関数
+# インストール先にLayersをクローンまたは更新する関数
+# 非空ディレクトリの場合は一時ディレクトリ経由でファイルをコピー（既存ファイルは保持）
 clone_to_subdir() {
-  info "Layersを $INSTALL_DIR にクローンします..."
+  info "Layersを $INSTALL_DIR にインストールします..."
   if [ -d "$INSTALL_DIR/.git" ] && is_layers_repo "$INSTALL_DIR"; then
-    # サブディレクトリに既にLayersリポジトリがある場合は更新
+    # 既存のLayersリポジトリがある場合は更新
     info "既存のLayersリポジトリを更新しています: $INSTALL_DIR"
     cd "$INSTALL_DIR" || { error "ディレクトリに移動できません: $INSTALL_DIR"; exit 1; }
     git pull || {
       warn "git pull に失敗しました。既存のリポジトリをそのまま使用します。"
     }
-  elif [ -d "$INSTALL_DIR" ] && [ -n "$(ls -A "$INSTALL_DIR" 2>/dev/null)" ]; then
-    # サブディレクトリが存在し空でない場合はエラー
-    error "$INSTALL_DIR は既に存在し、空ではありません。"
-    error "ディレクトリを削除するか、LAYERS_INSTALL_DIR 環境変数で別のインストール先を指定してください。"
-    exit 1
   else
-    git clone "$REPO_URL" "$INSTALL_DIR" || {
+    # ディレクトリが空でない、または別のGitリポジトリの場合は
+    # 一時ディレクトリにクローンしてからファイルをコピー（既存ファイルは保持）
+    local tmp_dir
+    tmp_dir=$(mktemp -d)
+    info "一時ディレクトリにクローンしています: $tmp_dir"
+    git clone "$REPO_URL" "$tmp_dir" || {
       error "リポジトリのクローンに失敗しました。"
       error "URL: $REPO_URL"
       error "ネットワーク接続とURLを確認してください。"
+      rm -rf "$tmp_dir"
       exit 1
     }
-    success "クローン完了: $INSTALL_DIR"
+    mkdir -p "$INSTALL_DIR"
+    info "ファイルを $INSTALL_DIR にコピーしています（既存ファイルは保持）..."
+    # .gitはコピーしない（インストール完了後に.gitを削除する方針のため）
+    rm -rf "$tmp_dir/.git"
+    shopt -s dotglob
+    cp -rn "$tmp_dir"/* "$INSTALL_DIR/" 2>/dev/null || true
+    shopt -u dotglob
+    rm -rf "$tmp_dir"
+    success "インストール完了: $INSTALL_DIR"
   fi
 }
 
@@ -174,7 +184,7 @@ if [ "$EXEC_MODE" = "pipe" ]; then
         warn "git pull に失敗しました。既存のリポジトリをそのまま使用します。"
       }
     else
-      # Layers以外のGitリポジトリの場合はサブディレクトリにクローン
+      # Layers以外のGitリポジトリの場合は一時ディレクトリ経由でインストール
       warn "カレントディレクトリは別のGitリポジトリです。既存リポジトリを保護します。"
       clone_to_subdir
     fi
@@ -189,8 +199,8 @@ if [ "$EXEC_MODE" = "pipe" ]; then
     }
     success "クローン完了: $INSTALL_DIR"
   else
-    # 非空ディレクトリだがGitリポジトリでない場合はサブディレクトリにクローン
-    warn "カレン���ディレクトリは空ではありません。既存ファイルを保護します。"
+    # 非空ディレクトリだがGitリポジトリでない場合は一時ディレクトリ経由でインストール
+    warn "カレントディレクトリは空ではありません。既存ファイルを保護します。"
     clone_to_subdir
   fi
 
@@ -509,7 +519,18 @@ else
 fi
 
 # -------------------------------------------------------------------------
-# 13. 完了メッセージ
+# 13. .gitディレクトリの削除
+# -------------------------------------------------------------------------
+# インストール完了後、Git履歴を削除してクリーンなコピーにする
+# （localモードのgit pull完了後、pipeモードのgit clone完了後に実行）
+if [ -d "$PROJECT_DIR/.git" ]; then
+  info "Git履歴（.gitディレクトリ）を削除しています..."
+  rm -rf "$PROJECT_DIR/.git"
+  success ".gitディレクトリを削除しました。プロジェクトはクリーンなコピーです。"
+fi
+
+# -------------------------------------------------------------------------
+# 14. 完了メッセージ
 # -------------------------------------------------------------------------
 echo ""
 echo "============================================="
